@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item android:title="Playing Information">
+        <menu>
+            <item
+                android:id="@+id/nav_HowToPlay"
+                android:icon="@drawable/ic_menu_camera"
+                android:title="How to Play" />
+            <item
+                android:id="@+id/nav_Legend"
+                android:icon="@drawable/ic_menu_gallery"
+                android:title="Legend" />
+            <item
+                android:id="@+id/nav_UserInformation"
+                android:icon="@drawable/ic_menu_slideshow"
+                android:title="User Information" />
+        </menu>
+    </item>
+
+    <item android:title="Customizables">
+        <menu>
+            <item
+                android:id="@+id/nav_About"
+                android:icon="@drawable/ic_menu_manage"
+                android:title="About" />
+            <item
+                android:id="@+id/nav_Settings"
+                android:icon="@drawable/ic_menu_manage"
+                android:title="Settings" />
+            <item
+                android:id="@+id/nav_Filler"
+                android:icon="@drawable/ic_menu_manage"
+                android:title="Filler" />
+        </menu>
+    </item>
+
+</menu>
