@@ -59,10 +59,10 @@ import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private MapView mapView;
-    /*private static final int PLACE_SELECTION_REQUEST_CODE = 56789;
+    private static final int PLACE_SELECTION_REQUEST_CODE = 56789;
     private static final String MARKER_SOURCE = "markers-source";
     private static final String MARKER_STYLE_LAYER = "markers-style-layer";
-    private static final String MARKER_IMAGE = "custom-marker";*/
+    private static final String MARKER_IMAGE = "custom-marker";
     private static final String mapboxKey = "pk.eyJ1Ijoic3RyaXBlZHdyaXN0YmFuZHMiLCJhIjoiY2pvN3VrYWx6MDJsZjN3dGt1bDNjd2c0aiJ9.qeI4-uMxyL5JnEiPi3UVSQ";
 
 
@@ -90,6 +90,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
                 addPointsLayer(style);
+                    style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
+                            MainActivity.this.getResources(), R.drawable.custom_marker));
+                    addMarkers(style);
             }
         });
     }
@@ -132,61 +135,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    /*@Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Mapbox.getInstance(this, mapboxKey);
-        setContentView(R.layout.activity_main);
-        mapView = findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-
-
-        mapView.getMapAsync(new OnMapReadyCallback() {
-
-            @Override
-            public void onMapReady(@NonNull MapboxMap mapboxMap) {
-//                mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
-                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"), new Style.OnStyleLoaded() {
-                    @Override
-                    public void onStyleLoaded(@NonNull Style style) {
-
-                        // Map is set up and the style has loaded. Now you can add data or make other map adjustments
-
-
-
-                    }
-                });
-            }
-        });
-    }*/
-
-
-    /*@Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Mapbox.getInstance(this, "pk.eyJ1Ijoic3RyaXBlZHdyaXN0YmFuZHMiLCJhIjoiY2pvN3VrYWx6MDJsZjN3dGt1bDNjd2c0aiJ9.qeI4-uMxyL5JnEiPi3UVSQ");
-
-        setContentView(R.layout.activity_main);
-
-        mapView = findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync((OnMapReadyCallback) this);
-
-        mapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/mapbox/light-v10"), new Style.OnStyleLoaded() {
-                    @Override
-                    public void onStyleLoaded(@NonNull Style style) {
-                        style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
-                                MainActivity.this.getResources(), R.drawable.custom_marker));
-                        addMarkers(style);
-                    }
-                });
-            }
-        });
-}
-
     private void addMarkers(@NonNull Style loadedMapStyle) {
         List<Feature> features = new ArrayList<>();
         features.add(Feature.fromGeometry(Point.fromLngLat(-78.2794, 39.2386)));
@@ -202,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                         PropertyFactory.iconOffset(new Float[] {0f, -52f})
                 ));
-    }*/
+    }
 
 
 
