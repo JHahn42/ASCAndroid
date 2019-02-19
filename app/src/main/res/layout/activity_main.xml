@@ -8,6 +8,7 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="0dp"
@@ -18,7 +19,7 @@
         mapbox:layout_constraintTop_toTopOf="parent"
         mapbox:mapbox_cameraTargetLat="41.885"
         mapbox:mapbox_cameraTargetLng="-87.679"
-        mapbox:mapbox_cameraTilt="60"
-        mapbox:mapbox_cameraZoom="12" />
+        mapbox:mapbox_cameraTilt="1"
+        mapbox:mapbox_cameraZoom="3" />
 
 </android.support.constraint.ConstraintLayout>
