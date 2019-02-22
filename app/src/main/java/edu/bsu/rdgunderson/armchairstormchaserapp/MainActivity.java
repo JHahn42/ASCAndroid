@@ -1,5 +1,6 @@
 package edu.bsu.rdgunderson.armchairstormchaserapp;
 
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -141,13 +142,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     private void initSource(@NonNull Style loadedMapStyle) {
-        loadedMapStyle.addSource(new GeoJsonSource(ROUTE_SOURCE_ID,
-                FeatureCollection.fromFeatures(new Feature[] {})));
 
+        if (loadedMapStyle.getSourceAs(ROUTE_SOURCE_ID) == null) {
+            loadedMapStyle.addSource(new GeoJsonSource(ROUTE_SOURCE_ID,
+                    FeatureCollection.fromFeatures(new Feature[]{})));
+        }
         GeoJsonSource iconGeoJsonSource = new GeoJsonSource(ICON_SOURCE_ID, FeatureCollection.fromFeatures(new Feature[] {
                 Feature.fromGeometry(Point.fromLngLat(origin.longitude(), origin.latitude())),
                 Feature.fromGeometry(Point.fromLngLat(destination.longitude(), destination.latitude()))}));
-        loadedMapStyle.addSource(iconGeoJsonSource);
+        if (loadedMapStyle.getSourceAs(ICON_SOURCE_ID) == null) {
+            loadedMapStyle.addSource(iconGeoJsonSource);
+        }
     }
 
     private void initLayers(@NonNull Style loadedMapStyle) {
@@ -159,16 +164,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 lineWidth(5f),
                 lineColor(Color.parseColor("#009688"))
         );
-        loadedMapStyle.addLayer(routeLayer);
 
-        loadedMapStyle.addImage(RED_PIN_ICON_ID, BitmapUtils.getBitmapFromDrawable(
-                getResources().getDrawable(R.drawable.custom_marker)));
+        if (loadedMapStyle.getLayer(ROUTE_LAYER_ID) == null) {
+            loadedMapStyle.addLayer(routeLayer);
+        }
+        /*loadedMapStyle.addImage(RED_PIN_ICON_ID, BitmapUtils.getBitmapFromDrawable(
+                getResources().getDrawable(R.drawable.custom_marker)));*/
 
-        loadedMapStyle.addLayer(new SymbolLayer(ICON_LAYER_ID, ICON_SOURCE_ID).withProperties(
-                iconImage(RED_PIN_ICON_ID),
-                iconIgnorePlacement(true),
-                iconIgnorePlacement(true),
-                iconOffset(new Float[] {0f, -4f})));
+        if (loadedMapStyle.getLayer(ICON_LAYER_ID) == null) {
+            loadedMapStyle.addLayer(new SymbolLayer(ICON_LAYER_ID, ICON_SOURCE_ID).withProperties(
+                    iconImage(RED_PIN_ICON_ID),
+                    iconIgnorePlacement(true),
+                    iconIgnorePlacement(true),
+                    iconOffset(new Float[]{0f, -4f})));
+        }
     }
 
     private void getRoute(@NonNull final Style style, Point origin, Point destination) {
