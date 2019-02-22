@@ -1,16 +1,17 @@
 package edu.bsu.rdgunderson.armchairstormchaserapp;
 
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-import android.widget.Toast;
 
-import com.mapbox.android.gestures.StandardScaleGestureDetector;
+import com.mapbox.api.directions.v5.DirectionsCriteria;
+import com.mapbox.api.directions.v5.MapboxDirections;
+import com.mapbox.api.directions.v5.models.DirectionsResponse;
+import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -20,18 +21,33 @@ import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.LineLayer;
+import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.utils.BitmapUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import timber.log.Timber;
+
+import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -41,10 +57,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String MARKER_STYLE_LAYER = "markers-style-layer";
     private static final String MARKER_IMAGE = "custom-marker";
     private static final String mapboxKey = "pk.eyJ1Ijoic3RyaXBlZHdyaXN0YmFuZHMiLCJhIjoiY2pvN3VrYWx6MDJsZjN3dGt1bDNjd2c0aiJ9.qeI4-uMxyL5JnEiPi3UVSQ";
-    private double currentLattitude = 0;
-    private double currentLongitute = 0;
+    private double currentLattitude = 40.193378;
+    private double currentLongitute = -85.386360;
+    private double destinationLattitude = 41.878113;
+    private double destinationLongitute = -87.629799;
 
     private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
+
+    private static final String ROUTE_LAYER_ID = "route-layer-id";
+    private static final String ROUTE_SOURCE_ID = "route-source-id";
+    private static final String ICON_LAYER_ID = "icon-layer-id";
+    private static final String ICON_SOURCE_ID = "icon-source-id";
+    private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
+    private MapboxMap mapboxMap;
+    private DirectionsRoute currentRoute;
+    private MapboxDirections client;
+    private Point origin;
+    private Point destination;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,18 +89,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onMapReady(@NonNull MapboxMap mapboxMap) {
-            mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"), new Style.OnStyleLoaded() {
+    public void onMapReady(@NonNull final MapboxMap mapboxMap) {
+//        mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"));
+        mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"), new Style.OnStyleLoaded() {
 
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
                 addPointsLayer(style);
-                    style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
+                    /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
                             MainActivity.this.getResources(), R.drawable.custom_marker));
-                    addMarkers(style);
-            }
+                    addMarkers(style);*/
+
+                }
+
         });
 
 
@@ -80,18 +112,109 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
 
-                String string = String.format(Locale.US, "User clicked at: %s", point.toString());
+//                String string = String.format(Locale.US, "User clicked at: %s", point.toString());
 
-                Toast.makeText(MainActivity.this, string, Toast.LENGTH_LONG).show();
+//                Toast.makeText(MainActivity.this, string, Toast.LENGTH_LONG).show();
 
-                currentLattitude = point.getLatitude();
-                currentLongitute = point.getLongitude();
+                destinationLattitude = point.getLatitude();
+                destinationLongitute = point.getLongitude();
+
+                origin = Point.fromLngLat(currentLongitute, currentLattitude);
+
+                destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
+
+//                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"));
+                Style style = mapboxMap.getStyle();
+                initSource(style);
+
+                initLayers(style);
+
+                getRoute(style, origin, destination);
+
                 return false;
             }
         });
 
 
 
+    }
+
+
+    private void initSource(@NonNull Style loadedMapStyle) {
+        loadedMapStyle.addSource(new GeoJsonSource(ROUTE_SOURCE_ID,
+                FeatureCollection.fromFeatures(new Feature[] {})));
+
+        GeoJsonSource iconGeoJsonSource = new GeoJsonSource(ICON_SOURCE_ID, FeatureCollection.fromFeatures(new Feature[] {
+                Feature.fromGeometry(Point.fromLngLat(origin.longitude(), origin.latitude())),
+                Feature.fromGeometry(Point.fromLngLat(destination.longitude(), destination.latitude()))}));
+        loadedMapStyle.addSource(iconGeoJsonSource);
+    }
+
+    private void initLayers(@NonNull Style loadedMapStyle) {
+        LineLayer routeLayer = new LineLayer(ROUTE_LAYER_ID, ROUTE_SOURCE_ID);
+
+        routeLayer.setProperties(
+                lineCap(Property.LINE_CAP_ROUND),
+                lineJoin(Property.LINE_JOIN_ROUND),
+                lineWidth(5f),
+                lineColor(Color.parseColor("#009688"))
+        );
+        loadedMapStyle.addLayer(routeLayer);
+
+        loadedMapStyle.addImage(RED_PIN_ICON_ID, BitmapUtils.getBitmapFromDrawable(
+                getResources().getDrawable(R.drawable.custom_marker)));
+
+        loadedMapStyle.addLayer(new SymbolLayer(ICON_LAYER_ID, ICON_SOURCE_ID).withProperties(
+                iconImage(RED_PIN_ICON_ID),
+                iconIgnorePlacement(true),
+                iconIgnorePlacement(true),
+                iconOffset(new Float[] {0f, -4f})));
+    }
+
+    private void getRoute(@NonNull final Style style, Point origin, Point destination) {
+
+        client = MapboxDirections.builder()
+                .origin(origin)
+                .destination(destination)
+                .overview(DirectionsCriteria.OVERVIEW_FULL)
+                .profile(DirectionsCriteria.PROFILE_DRIVING)
+                .accessToken(mapboxKey)
+                .build();
+
+        client.enqueueCall(new Callback<DirectionsResponse>() {
+            @Override
+            public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+//                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"));
+//                Style style = mapboxMap.getStyle();
+                System.out.println(call.request().url().toString());
+
+                Timber.d("Response code: " + response.code());
+                if (response.body() == null) {
+                    Timber.e("No routes found, make sure you set the right user and access token.");
+                    return;
+                } else if (response.body().routes().size() < 1) {
+                    Timber.e("No routes found");
+                    return;
+                }
+
+                currentRoute = response.body().routes().get(0);
+
+                if (style.isFullyLoaded()) {
+                    GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);
+
+                    if (source != null) {
+                        Timber.d("onResponse: source != null");
+                        source.setGeoJson(FeatureCollection.fromFeature(
+                                Feature.fromGeometry(LineString.fromPolyline(currentRoute.geometry(), PRECISION_6))));
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
+                Timber.e("Error: " + throwable.getMessage());
+            }
+        });
     }
 
     private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
@@ -142,10 +265,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         loadedMapStyle.addLayer(new SymbolLayer(MARKER_STYLE_LAYER, MARKER_SOURCE)
                 .withProperties(
                         PropertyFactory.iconAllowOverlap(true),
-                        PropertyFactory.iconIgnorePlacement(true),
-                        PropertyFactory.iconImage(MARKER_IMAGE),
+                        iconIgnorePlacement(true),
+                        iconImage(MARKER_IMAGE),
 
-                        PropertyFactory.iconOffset(new Float[] {0f, -52f})
+                        iconOffset(new Float[] {0f, -52f})
                 ));
     }
 
@@ -193,8 +316,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.onSaveInstanceState(outState);
     }
 
-
-    public void switchSelect(View view) {
-
-    }
 }
