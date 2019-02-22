@@ -20,6 +20,14 @@
         mapbox:mapbox_cameraTargetLat="41.885"
         mapbox:mapbox_cameraTargetLng="-87.679"
         mapbox:mapbox_cameraTilt="1"
-        mapbox:mapbox_cameraZoom="3" />
+        mapbox:mapbox_cameraZoom="3" >
+
+        <Switch
+            android:id="@+id/styleSwitch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Style Switch"
+            android:onClick="switchSelect"/>
+    </com.mapbox.mapboxsdk.maps.MapView>
 
 </android.support.constraint.ConstraintLayout>

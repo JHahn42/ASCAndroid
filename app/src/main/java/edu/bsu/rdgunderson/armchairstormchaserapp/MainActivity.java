@@ -5,11 +5,15 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Toast;
 
+import com.mapbox.android.gestures.StandardScaleGestureDetector;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
+import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
@@ -24,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
@@ -36,7 +41,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String MARKER_STYLE_LAYER = "markers-style-layer";
     private static final String MARKER_IMAGE = "custom-marker";
     private static final String mapboxKey = "pk.eyJ1Ijoic3RyaXBlZHdyaXN0YmFuZHMiLCJhIjoiY2pvN3VrYWx6MDJsZjN3dGt1bDNjd2c0aiJ9.qeI4-uMxyL5JnEiPi3UVSQ";
-
+    private double currentLattitude = 0;
+    private double currentLongitute = 0;
 
     private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
 
@@ -67,6 +73,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     addMarkers(style);
             }
         });
+
+
+
+        mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
+            @Override
+            public boolean onMapClick(@NonNull LatLng point) {
+
+                String string = String.format(Locale.US, "User clicked at: %s", point.toString());
+
+                Toast.makeText(MainActivity.this, string, Toast.LENGTH_LONG).show();
+
+                currentLattitude = point.getLatitude();
+                currentLongitute = point.getLongitude();
+                return false;
+            }
+        });
+
+
+
     }
 
     private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
@@ -166,5 +191,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
+    }
+
+
+    public void switchSelect(View view) {
+
     }
 }
