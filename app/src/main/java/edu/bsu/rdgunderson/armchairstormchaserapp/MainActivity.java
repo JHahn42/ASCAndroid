@@ -1,11 +1,10 @@
 package edu.bsu.rdgunderson.armchairstormchaserapp;
 
-import android.graphics.BitmapFactory;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
@@ -27,18 +26,14 @@ import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
-import com.mapbox.mapboxsdk.utils.BitmapUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
-
 import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
@@ -87,13 +82,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
+
+        Intent update = new Intent(this, updateLocation.class);
+        this.startService(update);
     }
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-//        mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"));
         mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"), new Style.OnStyleLoaded() {
-
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
@@ -107,24 +103,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         });
 
-
-
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
-
-//                String string = String.format(Locale.US, "User clicked at: %s", point.toString());
-
-//                Toast.makeText(MainActivity.this, string, Toast.LENGTH_LONG).show();
-
                 destinationLattitude = point.getLatitude();
                 destinationLongitute = point.getLongitude();
 
+                //Retrieve "origin" (current location) from server
                 origin = Point.fromLngLat(currentLongitute, currentLattitude);
 
+                //Send Destination Information to server
+                //When destination change is sent server should automatically change course
                 destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
 
-//                mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"));
                 Style style = mapboxMap.getStyle();
                 initSource(style);
 
@@ -135,11 +126,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return false;
             }
         });
-
-
-
     }
-
 
     private void initSource(@NonNull Style loadedMapStyle) {
 
@@ -206,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     return;
                 }
 
+                //Send Current ROute GeoJson file to server
                 currentRoute = response.body().routes().get(0);
 
                 if (style.isFullyLoaded()) {
@@ -227,6 +215,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
+        //Instead of loading from assets folder, retrieve from server
         loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
                 loadJsonFromAsset("Tornado_Watch.geojson")));
     }
@@ -280,8 +269,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         iconOffset(new Float[] {0f, -52f})
                 ));
     }
-
-
 
     @Override
     public void onStart() {
