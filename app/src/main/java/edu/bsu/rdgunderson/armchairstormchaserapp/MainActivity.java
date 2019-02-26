@@ -5,12 +5,15 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
+
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
+import com.mapbox.geojson.GeoJson;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
@@ -26,10 +29,17 @@ import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -52,7 +62,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String MARKER_SOURCE = "markers-source";
     private static final String MARKER_STYLE_LAYER = "markers-style-layer";
     private static final String MARKER_IMAGE = "custom-marker";
-    private static final String mapboxKey = "pk.eyJ1Ijoic3RyaXBlZHdyaXN0YmFuZHMiLCJhIjoiY2pvN3VrYWx6MDJsZjN3dGt1bDNjd2c0aiJ9.qeI4-uMxyL5JnEiPi3UVSQ";
     private double currentLattitude = 40.193378;
     private double currentLongitute = -85.386360;
     private double destinationLattitude = 41.878113;
@@ -71,11 +80,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point origin;
     private Point destination;
 
+    private Socket socket;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Mapbox.getInstance(this, mapboxKey);
+        ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
+        socket = app.getSocket();
+        socket.connect();
+
+
+        Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
 
         setContentView(R.layout.activity_main);
 
@@ -89,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-        mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/stripedwristbands/cjrs8ad75iwpe2so1sq19ayom"), new Style.OnStyleLoaded() {
+        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
@@ -174,7 +190,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .destination(destination)
                 .overview(DirectionsCriteria.OVERVIEW_FULL)
                 .profile(DirectionsCriteria.PROFILE_DRIVING)
-                .accessToken(mapboxKey)
+                .accessToken(Constants.MAPBOX_API_KEY)
                 .build();
 
         client.enqueueCall(new Callback<DirectionsResponse>() {
@@ -195,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 //Send Current ROute GeoJson file to server
                 currentRoute = response.body().routes().get(0);
+                socket.emit("setTravelRoute", currentRoute);
 
                 if (style.isFullyLoaded()) {
                     GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);

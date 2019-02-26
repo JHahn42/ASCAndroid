@@ -12,7 +12,9 @@
         android:label=""
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:name="edu.bsu.rdgunderson.armchairstormchaserapp.ArmchairStormChaser"
+        android:usesCleartextTraffic="true">
         <service
             android:name=".updateLocation"
             android:enabled="true"
