@@ -188,8 +188,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         client = MapboxDirections.builder()
                 .origin(origin)
                 .destination(destination)
-                .overview(DirectionsCriteria.OVERVIEW_FULL)
+                .overview(DirectionsCriteria.OVERVIEW_SIMPLIFIED)
                 .profile(DirectionsCriteria.PROFILE_DRIVING)
+                .geometries(DirectionsCriteria.GEOMETRY_POLYLINE6)
                 .accessToken(Constants.MAPBOX_API_KEY)
                 .build();
 
@@ -211,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 //Send Current ROute GeoJson file to server
                 currentRoute = response.body().routes().get(0);
-                socket.emit("setTravelRoute", currentRoute);
+                socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
 
                 if (style.isFullyLoaded()) {
                     GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);
