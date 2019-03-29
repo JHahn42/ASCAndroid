@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point destination;
 
     private boolean isMarkers = false;
+    private SymbolLayer originMarkerSymbolLayer = null;
     private SymbolLayer symbolLayer = null;
     private GeoJsonSource originMarkerGeoJsonSource = null;
     private SymbolLayer symbolLayer2 = null;
@@ -116,7 +117,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 addPolygonLayer(style);
                 addPointsLayer(style);
 
-                
+                    //Add Current Position Icon on App start
+                    style.addImage("origin-marker-icon-id",
+                            BitmapFactory.decodeResource(
+                                    MainActivity.this.getResources(), R.drawable.custom_marker));
+
+                    originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
+                            Point.fromLngLat(currentLongitute, currentLattitude)));
+                    style.addSource(originMarkerGeoJsonSource);
+
+                    originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+                    originMarkerSymbolLayer.withProperties(
+                            PropertyFactory.iconImage("origin-marker-icon-id")
+                    );
+                    style.addLayer(originMarkerSymbolLayer);
 
                 /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
                             MainActivity.this.getResources(), R.drawable.custom_marker));
@@ -161,10 +175,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 getRoute(style, origin, destination);
 
+                style.removeLayer("originMarker-layer-id");
+                style.removeSource(originMarkerGeoJsonSource);
                 if (isMarkers) {
                     //Remove Markers
-                    style.removeLayer("originMarker-layer-id");
-                    style.removeSource(originMarkerGeoJsonSource);
+                    /*style.removeLayer("originMarker-layer-id");
+                    style.removeSource(originMarkerGeoJsonSource);*/
                     style.removeLayer("destinationMarker-layer-id");
                     style.removeSource(destinationMarkergeoJsonSource);
                 }
