@@ -1,11 +1,11 @@
 package edu.bsu.rdgunderson.armchairstormchaserapp;
 
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -13,7 +13,6 @@ import com.mapbox.api.directions.v5.models.DirectionsResponse;
 import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
-import com.mapbox.geojson.GeoJson;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.Mapbox;
@@ -30,22 +29,19 @@ import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import io.socket.client.Socket;
-import io.socket.emitter.Emitter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import timber.log.Timber;
 import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
+import static com.mapbox.mapboxsdk.style.expressions.Expression.interpolate;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
@@ -54,6 +50,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.rasterOpacity;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -79,6 +76,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MapboxDirections client;
     private Point origin;
     private Point destination;
+
+    private boolean isMarkers = false;
+    private SymbolLayer symbolLayer = null;
+    private GeoJsonSource originMarkerGeoJsonSource = null;
+    private SymbolLayer symbolLayer2 = null;
+    private GeoJsonSource destinationMarkergeoJsonSource = null;
+
 
     private Socket socket;
 
@@ -111,9 +115,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
                 addPointsLayer(style);
-                    /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
+
+                
+
+                /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
                             MainActivity.this.getResources(), R.drawable.custom_marker));
                     addMarkers(style);*/
+                    // Create a data source for the satellite raster image and add the source to the map
+
+                    //style.addSource(new RasterSource("SATELLITE_RASTER_SOURCE_ID",
+                            //"mapbox://styles/stripedwristbands/cjojc7pow0bjv2st5rkoinjza", 512));
+
+                    //mapbox://styles/stripedwristbands/cjojc7pow0bjv2st5rkoinjza
+                    // Create a new map layer for the satellite raster images and add the satellite layer to the map.
+                    // Use runtime styling to adjust the satellite layer's opacity based on the map camera's zoom level
+
+                    /*style.addLayer(
+                            new RasterLayer("SATELLITE_RASTER_LAYER_ID", "SATELLITE_RASTER_SOURCE_ID").withProperties(
+                                    rasterOpacity(interpolate(linear(), zoom(),
+                                            stop(6, 0),
+                                            stop(7, 1)
+                                    ))));*/
 
                 }
 
@@ -138,6 +160,45 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 initLayers(style);
 
                 getRoute(style, origin, destination);
+
+                if (isMarkers) {
+                    //Remove Markers
+                    style.removeLayer("originMarker-layer-id");
+                    style.removeSource(originMarkerGeoJsonSource);
+                    style.removeLayer("destinationMarker-layer-id");
+                    style.removeSource(destinationMarkergeoJsonSource);
+                }
+                //Add Current Position Icon
+                style.addImage("origin-marker-icon-id",
+                        BitmapFactory.decodeResource(
+                                MainActivity.this.getResources(), R.drawable.custom_marker));
+
+                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
+                        Point.fromLngLat(currentLongitute, currentLattitude)));
+                style.addSource(originMarkerGeoJsonSource);
+
+                symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+                symbolLayer.withProperties(
+                        PropertyFactory.iconImage("origin-marker-icon-id")
+                );
+                style.addLayer(symbolLayer);
+
+                //Add Destination Icon
+                style.addImage("destination-marker-icon-id",
+                        BitmapFactory.decodeResource(
+                                MainActivity.this.getResources(), R.drawable.custom_marker));
+
+                destinationMarkergeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
+                        Point.fromLngLat(destinationLongitute, destinationLattitude)));
+                style.addSource(destinationMarkergeoJsonSource);
+
+                symbolLayer2 = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
+                symbolLayer2.withProperties(
+                        PropertyFactory.iconImage("destination-marker-icon-id")
+                );
+                style.addLayer(symbolLayer2);
+
+                isMarkers = true;
 
                 return false;
             }
