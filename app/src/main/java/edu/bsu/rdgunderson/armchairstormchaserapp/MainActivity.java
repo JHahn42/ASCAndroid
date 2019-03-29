@@ -4,8 +4,11 @@ import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -31,8 +34,12 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.socket.client.Socket;
 import retrofit2.Call;
@@ -78,11 +85,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point destination;
 
     private boolean isMarkers = false;
+    private boolean isDestinationMarkers = false;
     private SymbolLayer originMarkerSymbolLayer = null;
     private SymbolLayer symbolLayer = null;
     private GeoJsonSource originMarkerGeoJsonSource = null;
     private SymbolLayer symbolLayer2 = null;
     private GeoJsonSource destinationMarkergeoJsonSource = null;
+    final Handler handler = new Handler();
+    Timer timer;
+    TimerTask timerTask;
 
 
     private Socket socket;
@@ -122,6 +133,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             BitmapFactory.decodeResource(
                                     MainActivity.this.getResources(), R.drawable.custom_marker));
 
+                    //Retrieve current location from server
                     originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
                             Point.fromLngLat(currentLongitute, currentLattitude)));
                     style.addSource(originMarkerGeoJsonSource);
@@ -131,6 +143,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             PropertyFactory.iconImage("origin-marker-icon-id")
                     );
                     style.addLayer(originMarkerSymbolLayer);
+
+
+                    startTimer();
+
 
                 /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
                             MainActivity.this.getResources(), R.drawable.custom_marker));
@@ -152,6 +168,78 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     ))));*/
 
                 }
+
+            public void startTimer() {
+                //set a new Timer
+                timer = new Timer();
+
+                //initialize the TimerTask's job
+                initializeTimerTask();
+
+                //schedule the timer, after the first 5000ms the TimerTask will run every 10000ms
+                timer.schedule(timerTask, 5000, 10000); //
+            }
+
+            public void stoptimertask(View v) {
+                //stop the timer, if it's not already null
+                if (timer != null) {
+                    timer.cancel();
+                    timer = null;
+                }
+            }
+
+            public void initializeTimerTask() {
+
+                timerTask = new TimerTask() {
+                    public void run() {
+
+                        //use a handler to run a toast that shows the current timestamp
+                        handler.post(new Runnable() {
+                            public void run() {
+                                Style style = mapboxMap.getStyle();
+
+                                //Remove Markers
+                                style.removeLayer("originMarker-layer-id");
+                                style.removeSource(originMarkerGeoJsonSource);
+                                /*style.removeLayer("destinationMarker-layer-id");
+                                style.removeSource(destinationMarkergeoJsonSource);*/
+                                //Add Current Position Icon
+                                style.addImage("origin-marker-icon-id",
+                                        BitmapFactory.decodeResource(
+                                                MainActivity.this.getResources(), R.drawable.custom_marker));
+
+                                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
+                                        Point.fromLngLat(currentLongitute, currentLattitude)));
+                                style.addSource(originMarkerGeoJsonSource);
+
+                                symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+                                symbolLayer.withProperties(
+                                        PropertyFactory.iconImage("origin-marker-icon-id")
+                                );
+                                style.addLayer(symbolLayer);
+
+                                //Add Destination Icon
+                                /*style.addImage("destination-marker-icon-id",
+                                        BitmapFactory.decodeResource(
+                                                MainActivity.this.getResources(), R.drawable.custom_marker));
+
+                                destinationMarkergeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
+                                        Point.fromLngLat(destinationLongitute, destinationLattitude)));
+                                style.addSource(destinationMarkergeoJsonSource);
+
+                                symbolLayer2 = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
+                                symbolLayer2.withProperties(
+                                        PropertyFactory.iconImage("destination-marker-icon-id")
+                                );
+                                style.addLayer(symbolLayer2);*/
+
+                                isMarkers = true;
+                            }
+                        });
+                    }
+                };
+            }
+
 
         });
 
@@ -177,7 +265,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 style.removeLayer("originMarker-layer-id");
                 style.removeSource(originMarkerGeoJsonSource);
-                if (isMarkers) {
+                if (isMarkers && isDestinationMarkers) {
                     //Remove Markers
                     /*style.removeLayer("originMarker-layer-id");
                     style.removeSource(originMarkerGeoJsonSource);*/
@@ -215,6 +303,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 style.addLayer(symbolLayer2);
 
                 isMarkers = true;
+                isDestinationMarkers = true;
 
                 return false;
             }
