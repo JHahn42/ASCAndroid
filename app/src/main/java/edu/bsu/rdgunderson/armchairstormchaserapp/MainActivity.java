@@ -85,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point destination;
 
     private boolean isMarkers = false;
+//    private boolean isWeather = false;
     private boolean isDestinationMarkers = false;
     private SymbolLayer originMarkerSymbolLayer = null;
     private SymbolLayer symbolLayer = null;
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
+    private GeoJsonSource weather = null;
 
 
     private Socket socket;
@@ -115,8 +117,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
-        Intent update = new Intent(this, updateLocation.class);
-        this.startService(update);
     }
 
     @Override
@@ -177,16 +177,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 initializeTimerTask();
 
                 //schedule the timer, after the first 5000ms the TimerTask will run every 10000ms
-                timer.schedule(timerTask, 5000, 10000); //
+                timer.schedule(timerTask, 5000, 5000); //
             }
 
-            public void stoptimertask(View v) {
+            /*public void stoptimertask(View v) {
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
                     timer = null;
                 }
-            }
+            }*/
 
             public void initializeTimerTask() {
 
@@ -234,6 +234,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 style.addLayer(symbolLayer2);*/
 
                                 isMarkers = true;
+
+                                /*createGeoJsonSource(style);
+                                addPolygonLayer(style);
+                                addPointsLayer(style);*/
+
                             }
                         });
                     }
@@ -400,8 +405,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
         //Instead of loading from assets folder, retrieve from server
-        loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
-                loadJsonFromAsset("Tornado_Watch.geojson")));
+        weather = new GeoJsonSource(GEOJSON_SOURCE_ID,
+                loadJsonFromAsset("Tornado_Watch.geojson"));
+        loadedMapStyle.addSource(weather);
+        /*loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
+                loadJsonFromAsset("Tornado_Watch.geojson")));*/
+//                loadJsonFromAsset("Severe_Thunderstorm_Watch.geojson")));
     }
 
     private void addPolygonLayer(@NonNull Style loadedMapStyle) {
