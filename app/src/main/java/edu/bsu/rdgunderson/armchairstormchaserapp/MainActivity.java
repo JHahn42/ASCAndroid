@@ -32,6 +32,10 @@ import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -42,6 +46,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -106,6 +111,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
         socket = app.getSocket();
+
+        // socket.on(Socket.EVENT_CONNECT, onConnect);
+        // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
+        // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
+        // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
+        socket.on("updatePlayer", onUpdatePlayer);
         socket.connect();
 
 
@@ -504,5 +515,37 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
     }
+
+
+    /*
+        Event fires when server emits the updatePlayer event
+        server emits in response to an emit from App side of
+        socket.emit("getPlayerUpdate");
+     */
+    private Emitter.Listener onUpdatePlayer = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+
+                MainActivity.this.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JSONObject data = (JSONObject) args[0];
+                        Point currentLocation;
+                        int score;
+                        JSONArray latlong;
+                        try{
+                            latlong = data.getJSONArray("currentLocation");
+                            currentLocation = Point.fromLngLat(latlong.getDouble(0), latlong.getDouble(1));
+                            score = data.getInt("currentScore");
+
+                            // call required method for updating icon location and pass it currentLocation
+                            // update score display once it is implemented
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+        }
+    };
 
 }
