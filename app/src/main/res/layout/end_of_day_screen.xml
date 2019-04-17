@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/linearLayout3"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:layout_marginBottom="9dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView2"
+        tools:ignore="MissingConstraints">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="97dp"
+            android:orientation="horizontal"
+            tools:layout_editor_absoluteX="16dp"
+            tools:layout_editor_absoluteY="541dp">
+
+            <TextView
+                android:id="@+id/dailyScoreLabel_textView"
+                android:layout_width="89dp"
+                android:layout_height="wrap_content"
+                android:text="Daily Score:"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="93dp"
+                tools:layout_editor_absoluteY="545dp" />
+
+            <TextView
+                android:id="@+id/dailyScore_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="[PLACEHOLDER]"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="93dp"
+                tools:layout_editor_absoluteY="545dp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="385dp"
+            android:layout_height="63dp"
+            android:orientation="horizontal"
+            tools:layout_editor_absoluteX="8dp"
+            tools:layout_editor_absoluteY="636dp">
+
+            <TextView
+                android:id="@+id/totalScoreLabel_textView"
+                android:layout_width="89dp"
+                android:layout_height="wrap_content"
+                android:text="Total Score"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="93dp"
+                tools:layout_editor_absoluteY="606dp" />
+
+            <TextView
+                android:id="@+id/totalScore_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="[PLACEHOLDER]"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="93dp"
+                tools:layout_editor_absoluteY="606dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="47dp"
+        android:layout_marginTop="59dp"
+        android:layout_marginEnd="47dp"
+        android:layout_marginBottom="60dp"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/logo"
+        tools:ignore="MissingConstraints" />
+
+    <Button
+        android:id="@+id/beginNewDay_button"
+        android:layout_width="142dp"
+        android:layout_height="69dp"
+        android:layout_marginBottom="6dp"
+        android:text="Begin New Day"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/endofDay_textView"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/endofDay_textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="174dp"
+        android:text="End of Day"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/beginNewDay_button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.505"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/imageView2"
+        tools:ignore="MissingConstraints" />
+
+</android.support.constraint.ConstraintLayout>
