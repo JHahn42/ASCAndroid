@@ -1,6 +1,5 @@
 package edu.bsu.rdgunderson.armchairstormchaserapp;
 
-import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -8,7 +7,6 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -38,9 +36,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -53,8 +49,8 @@ import retrofit2.Response;
 import timber.log.Timber;
 import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.interpolate;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
@@ -62,19 +58,17 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.rasterOpacity;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private MapView mapView;
-    private static final int PLACE_SELECTION_REQUEST_CODE = 56789;
     private static final String MARKER_SOURCE = "markers-source";
     private static final String MARKER_STYLE_LAYER = "markers-style-layer";
     private static final String MARKER_IMAGE = "custom-marker";
     private double currentLattitude = 40.193378;
     private double currentLongitute = -85.386360;
-    private double destinationLattitude = 41.878113;
-    private double destinationLongitute = -87.629799;
+    private double destinationLattitude;
+    private double destinationLongitute;
 
     private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
 
@@ -83,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String ICON_LAYER_ID = "icon-layer-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
     private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
-    private MapboxMap mapboxMap;
+//    private MapboxMap mapboxMap;
     private DirectionsRoute currentRoute;
     private MapboxDirections client;
     private Point origin;
@@ -132,12 +126,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
+//        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
+        mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
                 addPointsLayer(style);
+
+                //setContentView(R.layout.mapbox_view_search);
 
                     //Add Current Position Icon on App start
                     style.addImage("origin-marker-icon-id",
@@ -153,7 +150,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     originMarkerSymbolLayer.withProperties(
                             PropertyFactory.iconImage("origin-marker-icon-id")
                     );
-                    style.addLayer(originMarkerSymbolLayer);
+                    style.addLayer(originMarkerSymbolLayer.withProperties(
+                            iconAllowOverlap(true),
+                            iconIgnorePlacement(true)
+                    ));
 
 
                     startTimer();
@@ -227,7 +227,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 symbolLayer.withProperties(
                                         PropertyFactory.iconImage("origin-marker-icon-id")
                                 );
-                                style.addLayer(symbolLayer);
+                                style.addLayer(symbolLayer.withProperties(
+                                        iconAllowOverlap(true),
+                                        iconIgnorePlacement(true)
+                                ));
+
+                                //If there is a destination from the server, get destination and set route on screen to route between current destination and current location
+                                socket.emit("getDestination");
 
                                 //Add Destination Icon
                                 /*style.addImage("destination-marker-icon-id",
@@ -393,6 +399,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 //Send Current ROute GeoJson file to server
+                //response.body().waypoints();
                 currentRoute = response.body().routes().get(0);
                 socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
 
@@ -466,7 +473,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         loadedMapStyle.addLayer(new SymbolLayer(MARKER_STYLE_LAYER, MARKER_SOURCE)
                 .withProperties(
-                        PropertyFactory.iconAllowOverlap(true),
+                        iconAllowOverlap(true),
                         iconIgnorePlacement(true),
                         iconImage(MARKER_IMAGE),
 
@@ -547,5 +554,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
         }
     };
+
+    public void switchToLoginScreen(View view) {
+        setContentView(R.layout.login);
+    }
 
 }

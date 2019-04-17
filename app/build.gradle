@@ -41,5 +41,7 @@ dependencies {
         exclude group: 'org.json', module: 'json'
     }
     implementation 'com.cocoahero.android:geojson:1.0.1@jar'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation 'com.android.support:appcompat-v7:28'
 
 }

@@ -15,10 +15,6 @@
         android:theme="@style/AppTheme"
         android:name="edu.bsu.rdgunderson.armchairstormchaserapp.ArmchairStormChaser"
         android:usesCleartextTraffic="true">
-        <service
-            android:name=".updateLocation"
-            android:enabled="true"
-            android:exported="true"></service>
 
         <activity android:name=".MainActivity">
             <intent-filter>
