@@ -7,6 +7,7 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -77,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String ICON_LAYER_ID = "icon-layer-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
     private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
-//    private MapboxMap mapboxMap;
+    public MapboxMap mapboxMap;
     private DirectionsRoute currentRoute;
     private MapboxDirections client;
     private Point origin;
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ));
 
 
-                    startTimer();
+//                    startTimer();
 
 
                 /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
@@ -546,12 +547,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             score = data.getInt("currentScore");
 
                             // call required method for updating icon location and pass it currentLocation
+                            System.out.println("Current Location: " + currentLocation);
+                            updateLocation(currentLocation);
                             // update score display once it is implemented
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 });
+        }
+
+        private void updateLocation(Point currentLocation) {
+            //Toast.makeText(getApplicationContext(), (CharSequence) currentLocation, Toast.LENGTH_SHORT).show();
+            System.out.println(currentLocation);
+            Style style = mapboxMap.getStyle();
+            style.removeLayer("originMarker-layer-id");
+            style.removeSource(originMarkerGeoJsonSource);
+            style.addImage("origin-marker-icon-id",
+                    BitmapFactory.decodeResource(
+                            MainActivity.this.getResources(), R.drawable.custom_marker));
+
+            originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(currentLocation));
+            style.addSource(originMarkerGeoJsonSource);
+
+            symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+            symbolLayer.withProperties(
+                    PropertyFactory.iconImage("origin-marker-icon-id")
+            );
+            style.addLayer(symbolLayer.withProperties(
+                    iconAllowOverlap(true),
+                    iconIgnorePlacement(true)
+            ));
+            isMarkers = true;
         }
     };
 
