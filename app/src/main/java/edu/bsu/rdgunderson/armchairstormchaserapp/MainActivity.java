@@ -7,7 +7,6 @@ import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -23,22 +22,18 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -55,6 +50,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOpacity;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
@@ -72,13 +68,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double destinationLongitute;
 
     private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
+//    private static final String GEOJSON_SOURCE_ID = "geojson-source";
 
     private static final String ROUTE_LAYER_ID = "route-layer-id";
     private static final String ROUTE_SOURCE_ID = "route-source-id";
     private static final String ICON_LAYER_ID = "icon-layer-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
     private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
-    public MapboxMap mapboxMap;
     private DirectionsRoute currentRoute;
     private MapboxDirections client;
     private Point origin;
@@ -95,26 +91,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
-    private GeoJsonSource weather = null;
 
+    public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
 
     private Socket socket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
-        socket = app.getSocket();
-
-        // socket.on(Socket.EVENT_CONNECT, onConnect);
-        // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
-        // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        socket.on("updatePlayer", onUpdatePlayer);
-        socket.connect();
-
-
         Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
 
         setContentView(R.layout.activity_main);
@@ -128,12 +112,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
 //        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
-        mapboxMap.setStyle(Style.MAPBOX_STREETS, new Style.OnStyleLoaded() {
+        mapboxMap.setStyle(Style.LIGHT, new Style.OnStyleLoaded() {
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
-                addPointsLayer(style);
+
+                    ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
+                    socket = app.getSocket();
+
+                    // socket.on(Socket.EVENT_CONNECT, onConnect);
+                    // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
+                    // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
+                    // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
+                    socket.on("updatePlayer", onUpdatePlayer);
+                    socket.connect();
 
                 //setContentView(R.layout.mapbox_view_search);
 
@@ -157,7 +150,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ));
 
 
-//                    startTimer();
+
+                    startTimer();
 
 
                 /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
@@ -208,20 +202,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //use a handler to run a toast that shows the current timestamp
                         handler.post(new Runnable() {
                             public void run() {
+                                //Update player when timer task runs
+                                socket.emit("getPlayerUpdate");
+
                                 Style style = mapboxMap.getStyle();
 
                                 //Remove Markers
                                 style.removeLayer("originMarker-layer-id");
                                 style.removeSource(originMarkerGeoJsonSource);
-                                /*style.removeLayer("destinationMarker-layer-id");
-                                style.removeSource(destinationMarkergeoJsonSource);*/
+                                /*if (style.getSource("origin-source-id") != null) {
+                                    style.removeLayer("originaMarker-layer-id");
+                                    style.removeSource(destinationMarkergeoJsonSource);
+                                }*/
                                 //Add Current Position Icon
                                 style.addImage("origin-marker-icon-id",
                                         BitmapFactory.decodeResource(
                                                 MainActivity.this.getResources(), R.drawable.custom_marker));
 
-                                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
-                                        Point.fromLngLat(currentLongitute, currentLattitude)));
+                                /*originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
+                                        Point.fromLngLat(currentLongitute, currentLattitude)));*/
+                                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(currentLocation));
                                 style.addSource(originMarkerGeoJsonSource);
 
                                 symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
@@ -230,11 +230,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 );
                                 style.addLayer(symbolLayer.withProperties(
                                         iconAllowOverlap(true),
-                                        iconIgnorePlacement(true)
+                                        iconIgnorePlacement(true),
+                                        iconOpacity((float) 1.00)
                                 ));
 
                                 //If there is a destination from the server, get destination and set route on screen to route between current destination and current location
-                                socket.emit("getDestination");
 
                                 //Add Destination Icon
                                 /*style.addImage("destination-marker-icon-id",
@@ -251,11 +251,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 );
                                 style.addLayer(symbolLayer2);*/
 
-                                isMarkers = true;
-
-                                /*createGeoJsonSource(style);
-                                addPolygonLayer(style);
-                                addPointsLayer(style);*/
+//                                isMarkers = true;
 
                             }
                         });
@@ -331,6 +327,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return false;
             }
         });
+
     }
 
     private void initSource(@NonNull Style loadedMapStyle) {
@@ -424,30 +421,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
         //Instead of loading from assets folder, retrieve from server
-        weather = new GeoJsonSource(GEOJSON_SOURCE_ID,
-                loadJsonFromAsset("Tornado_Watch.geojson"));
-        loadedMapStyle.addSource(weather);
-        /*loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
-                loadJsonFromAsset("Tornado_Watch.geojson")));*/
-//                loadJsonFromAsset("Severe_Thunderstorm_Watch.geojson")));
+//        loadedMapStyle.addSource(new GeoJsonSource(loadJsonFromAsset("Tornado_Watch.geojson")));
+        loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
+                loadJsonFromAsset("Tornado_Watch.geojson")));
+        /*CustomGeometrySource source = new CustomGeometrySource("geojson-source", (FeatureCollection.fromJson(loadJsonFromAsset("Tornado_Watch.geojson"))));
+        loadedMapStyle.addSource(source);*/
     }
 
     private void addPolygonLayer(@NonNull Style loadedMapStyle) {
         FillLayer countryPolygonFillLayer = new FillLayer("polygon", GEOJSON_SOURCE_ID);
         countryPolygonFillLayer.setProperties(
-                PropertyFactory.fillColor(Color.RED),
                 PropertyFactory.fillOpacity(.4f));
         countryPolygonFillLayer.setFilter(eq(literal("$type"), literal("Polygon")));
         loadedMapStyle.addLayer(countryPolygonFillLayer);
-    }
-
-    private void addPointsLayer(@NonNull Style loadedMapStyle) {
-        CircleLayer individualCirclesLayer = new CircleLayer("points", GEOJSON_SOURCE_ID);
-        individualCirclesLayer.setProperties(
-                PropertyFactory.circleColor(Color.YELLOW),
-                PropertyFactory.circleRadius(3f));
-        individualCirclesLayer.setFilter(eq(literal("$type"), literal("Point")));
-        loadedMapStyle.addLayer(individualCirclesLayer);
     }
 
     private String loadJsonFromAsset(String filename) {
@@ -463,23 +449,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             ex.printStackTrace();
             return null;
         }
-    }
-
-    private void addMarkers(@NonNull Style loadedMapStyle) {
-        List<Feature> features = new ArrayList<>();
-        features.add(Feature.fromGeometry(Point.fromLngLat(-78.2794, 39.2386)));
-
-        loadedMapStyle.addSource(new GeoJsonSource(MARKER_SOURCE, FeatureCollection.fromFeatures(features)));
-
-
-        loadedMapStyle.addLayer(new SymbolLayer(MARKER_STYLE_LAYER, MARKER_SOURCE)
-                .withProperties(
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true),
-                        iconImage(MARKER_IMAGE),
-
-                        iconOffset(new Float[] {0f, -52f})
-                ));
     }
 
     @Override
@@ -547,7 +516,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             score = data.getInt("currentScore");
 
                             // call required method for updating icon location and pass it currentLocation
-                            System.out.println("Current Location: " + currentLocation);
                             updateLocation(currentLocation);
                             // update score display once it is implemented
                         } catch (JSONException e) {
@@ -557,30 +525,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
         }
 
-        private void updateLocation(Point currentLocation) {
-            //Toast.makeText(getApplicationContext(), (CharSequence) currentLocation, Toast.LENGTH_SHORT).show();
-            System.out.println(currentLocation);
-            Style style = mapboxMap.getStyle();
-            style.removeLayer("originMarker-layer-id");
-            style.removeSource(originMarkerGeoJsonSource);
-            style.addImage("origin-marker-icon-id",
-                    BitmapFactory.decodeResource(
-                            MainActivity.this.getResources(), R.drawable.custom_marker));
-
-            originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(currentLocation));
-            style.addSource(originMarkerGeoJsonSource);
-
-            symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
-            symbolLayer.withProperties(
-                    PropertyFactory.iconImage("origin-marker-icon-id")
-            );
-            style.addLayer(symbolLayer.withProperties(
-                    iconAllowOverlap(true),
-                    iconIgnorePlacement(true)
-            ));
-            isMarkers = true;
-        }
     };
+
+    public void updateLocation(Point currentLocationFromServer) {
+        currentLocation = currentLocationFromServer;
+    }
 
     public void switchToLoginScreen(View view) {
         setContentView(R.layout.login);
