@@ -9,6 +9,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
@@ -239,8 +240,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 };
             }
-
-
         });
 
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
@@ -493,16 +492,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         JSONObject data = (JSONObject) args[0];
                         Point currentLocation;
                         int score;
+                        double timeLeft;
                         JSONArray latlong;
                         try{
                             latlong = data.getJSONArray("currentLocation");
                             currentLocation = Point.fromLngLat(latlong.getDouble(0), latlong.getDouble(1));
                             score = data.getInt("currentScore");
-
+                            timeLeft = data.getDouble("timeLeft");
                             // call required method for updating icon location and pass it currentLocation
                             updateLocation(currentLocation);
                             // update score display once it is implemented
-                            updateScore(score);
+                            updateTimeLeft(timeLeft);
+                            //updateScore(score);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -512,8 +513,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     };
 
+    private void updateTimeLeft(double timeLeft) {
+        Toast.makeText(getApplicationContext(),"Time Left: " + timeLeft, Toast.LENGTH_LONG).show();
+    }
+
     private void updateScore(int score) {
-        Toast.makeText(getApplicationContext(),"Score: " + score, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getApplicationContext(),"Score: " + score, Toast.LENGTH_SHORT).show();
+        TextView scoreText = findViewById(R.id.textView_Score);
+        scoreText.setText(score);
     }
 
     public void updateLocation(Point currentLocationFromServer) {

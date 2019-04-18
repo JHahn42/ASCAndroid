@@ -7,6 +7,25 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/textView_Score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="16dp"
+        android:text="_"
+        app:layout_constraintStart_toEndOf="@+id/textView_Score_Label"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_Score_Label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="85dp"
+        android:text="Score: "
+        app:layout_constraintBaseline_toBaselineOf="@+id/textView_Score"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <Button
         android:id="@+id/buttonLogin"
         android:layout_width="wrap_content"
@@ -41,7 +60,9 @@
         mapbox:mapbox_cameraTargetLat="41.885"
         mapbox:mapbox_cameraTargetLng="-87.679"
         mapbox:mapbox_cameraTilt="1"
-        mapbox:mapbox_cameraZoom="3"></com.mapbox.mapboxsdk.maps.MapView>
+        mapbox:mapbox_cameraZoom="3">
+
+    </com.mapbox.mapboxsdk.maps.MapView>
 
 
 </android.support.constraint.ConstraintLayout>
