@@ -6,7 +6,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -91,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
+
+    private View login;
 
     public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
 
@@ -516,6 +522,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             // call required method for updating icon location and pass it currentLocation
                             updateLocation(currentLocation);
                             // update score display once it is implemented
+                            updateScore(score);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -525,14 +532,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     };
 
+    private void updateScore(int score) {
+        Toast.makeText(getApplicationContext(),"Score: " + score, Toast.LENGTH_SHORT).show();
+    }
+
     public void updateLocation(Point currentLocationFromServer) {
         currentLongitute = currentLocationFromServer.longitude();
         currentLattitude = currentLocationFromServer.latitude();
         currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
+        System.out.println(currentLocation);
     }
 
     public void switchToLoginScreen(View view) {
-        setContentView(R.layout.login);
+        LayoutInflater inflater = getLayoutInflater();
+        login = inflater.inflate(R.layout.login, null);
+        getWindow().addContentView(login, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
+//        addContentView(R.layout.login,1 );
+    }
+
+    public void switchToMainScreen(View view) {
+        ((ViewGroup) login.getParent()).removeView(login);
     }
 
 }

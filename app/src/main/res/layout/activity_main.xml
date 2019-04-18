@@ -7,6 +7,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <Button
+        android:id="@+id/buttonLogin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="switchToLoginScreen"
+        android:text="Login"
+        app:layout_constraintStart_toStartOf="@+id/mapView"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="0dp"
@@ -20,17 +29,7 @@
         mapbox:mapbox_cameraTargetLat="41.885"
         mapbox:mapbox_cameraTargetLng="-87.679"
         mapbox:mapbox_cameraTilt="1"
-        mapbox:mapbox_cameraZoom="3">
-
-
-        <Button
-            android:id="@+id/buttonLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Login"
-            android:onClick="switchToLoginScreen"/>
-
-    </com.mapbox.mapboxsdk.maps.MapView>
+        mapbox:mapbox_cameraZoom="3"></com.mapbox.mapboxsdk.maps.MapView>
 
 
 </android.support.constraint.ConstraintLayout>
