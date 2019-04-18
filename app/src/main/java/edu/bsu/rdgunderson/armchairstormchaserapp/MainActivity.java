@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
@@ -63,9 +62,6 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private MapView mapView;
-    private static final String MARKER_SOURCE = "markers-source";
-    private static final String MARKER_STYLE_LAYER = "markers-style-layer";
-    private static final String MARKER_IMAGE = "custom-marker";
     private double currentLattitude = 40.193378;
     private double currentLongitute = -85.386360;
     private double destinationLattitude;
@@ -95,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
+    private boolean hasSetRoute = false;
 
     private View login;
 
@@ -117,8 +114,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(@NonNull final MapboxMap mapboxMap) {
-//        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
-        mapboxMap.setStyle(Style.LIGHT, new Style.OnStyleLoaded() {
+        mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
+        //mapboxMap.setStyle(Style.LIGHT, new Style.OnStyleLoaded() {
                 @Override
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
@@ -156,27 +153,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     ));
 
                     startTimer();
-
-
-                /*style.addImage(MARKER_IMAGE, BitmapFactory.decodeResource(
-                            MainActivity.this.getResources(), R.drawable.custom_marker));
-                    addMarkers(style);*/
-                    // Create a data source for the satellite raster image and add the source to the map
-
-                    //style.addSource(new RasterSource("SATELLITE_RASTER_SOURCE_ID",
-                            //"mapbox://styles/stripedwristbands/cjojc7pow0bjv2st5rkoinjza", 512));
-
-                    //mapbox://styles/stripedwristbands/cjojc7pow0bjv2st5rkoinjza
-                    // Create a new map layer for the satellite raster images and add the satellite layer to the map.
-                    // Use runtime styling to adjust the satellite layer's opacity based on the map camera's zoom level
-
-                    /*style.addLayer(
-                            new RasterLayer("SATELLITE_RASTER_LAYER_ID", "SATELLITE_RASTER_SOURCE_ID").withProperties(
-                                    rasterOpacity(interpolate(linear(), zoom(),
-                                            stop(6, 0),
-                                            stop(7, 1)
-                                    ))));*/
-
                 }
 
             public void startTimer() {
@@ -190,13 +166,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 timer.schedule(timerTask, 5000, 5000); //
             }
 
-            /*public void stoptimertask(View v) {
+            public void stoptimertask(View v) {
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
                     timer = null;
                 }
-            }*/
+            }
 
             public void initializeTimerTask() {
 
@@ -207,8 +183,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when timer task runs
-                                socket.emit("getPlayerUpdate");
-
+                                if (hasSetRoute) {
+                                    socket.emit("getPlayerUpdate");
+                                }
                                 Style style = mapboxMap.getStyle();
 
                                 //Remove Markers
@@ -269,6 +246,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
+
+                hasSetRoute = true;
+
                 destinationLattitude = point.getLatitude();
                 destinationLongitute = point.getLongitude();
 
@@ -548,7 +528,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         login = inflater.inflate(R.layout.login, null);
         getWindow().addContentView(login, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT));
-//        addContentView(R.layout.login,1 );
+
     }
 
     public void switchToMainScreen(View view) {

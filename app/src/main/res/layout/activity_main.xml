@@ -16,6 +16,18 @@
         app:layout_constraintStart_toStartOf="@+id/mapView"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!--
+    <Button
+        android:id="@+id/buttonCreateUser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="7dp"
+        android:onClick="switchToLoginScreen"
+        android:text="Create Account"
+        app:layout_constraintBaseline_toBaselineOf="@+id/buttonLogin"
+        app:layout_constraintStart_toEndOf="@+id/buttonLogin" />
+    -->
+
     <com.mapbox.mapboxsdk.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="0dp"
