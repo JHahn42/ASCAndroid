@@ -149,8 +149,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             iconIgnorePlacement(true)
                     ));
 
-
-
                     startTimer();
 
 
@@ -528,7 +526,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     };
 
     public void updateLocation(Point currentLocationFromServer) {
-        currentLocation = currentLocationFromServer;
+        currentLongitute = currentLocationFromServer.longitude();
+        currentLattitude = currentLocationFromServer.latitude();
+        currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
     }
 
     public void switchToLoginScreen(View view) {
