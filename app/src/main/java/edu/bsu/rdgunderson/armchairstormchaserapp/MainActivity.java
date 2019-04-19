@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -54,11 +53,11 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOpacity;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
+import static java.lang.Math.floor;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -86,10 +85,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //    private boolean isWeather = false;
     private boolean isDestinationMarkers = false;
     private SymbolLayer originMarkerSymbolLayer = null;
-    private SymbolLayer symbolLayer = null;
     private GeoJsonSource originMarkerGeoJsonSource = null;
-    private SymbolLayer symbolLayer2 = null;
-    private GeoJsonSource destinationMarkergeoJsonSource = null;
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
@@ -189,54 +185,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                     socket.emit("getPlayerUpdate");
                                     updateMarkerPosition();
                                 }
-//                                Style style = mapboxMap.getStyle();
-//
-//                                //Remove Markers
-//                                style.removeLayer("originMarker-layer-id");
-//                                style.removeSource(originMarkerGeoJsonSource);
-//                                /*if (style.getSource("origin-source-id") != null) {
-//                                    style.removeLayer("originaMarker-layer-id");
-//                                    style.removeSource(destinationMarkergeoJsonSource);
-//                                }*/
-//                                //Add Current Position Icon
-//                                style.addImage("origin-marker-icon-id",
-//                                        BitmapFactory.decodeResource(
-//                                                MainActivity.this.getResources(), R.drawable.custom_marker));
-//
-//                                /*originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
-//                                        Point.fromLngLat(currentLongitute, currentLattitude)));*/
-//                                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(currentLocation));
-//                                style.addSource(originMarkerGeoJsonSource);
-//
-//                                symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
-//                                symbolLayer.withProperties(
-//                                        PropertyFactory.iconImage("origin-marker-icon-id")
-//                                );
-//                                style.addLayer(symbolLayer.withProperties(
-//                                        iconAllowOverlap(true),
-//                                        iconIgnorePlacement(true),
-//                                        iconOpacity((float) 1.00)
-//                                ));
-
-                                //If there is a destination from the server, get destination and set route on screen to route between current destination and current location
-
-                                //Add Destination Icon
-                                /*style.addImage("destination-marker-icon-id",
-                                        BitmapFactory.decodeResource(
-                                                MainActivity.this.getResources(), R.drawable.custom_marker));
-
-                                destinationMarkergeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
-                                        Point.fromLngLat(destinationLongitute, destinationLattitude)));
-                                style.addSource(destinationMarkergeoJsonSource);
-
-                                symbolLayer2 = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
-                                symbolLayer2.withProperties(
-                                        PropertyFactory.iconImage("destination-marker-icon-id")
-                                );
-                                style.addLayer(symbolLayer2);*/
-
-//                                isMarkers = true;
-
                             }
                         });
                     }
@@ -268,48 +216,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 getRoute(style, origin, destination);
 
                 updateMarkerPosition();
-
-//                style.removeLayer("originMarker-layer-id");
-//                style.removeSource(originMarkerGeoJsonSource);
-//                if (isMarkers && isDestinationMarkers) {
-//                    //Remove Markers
-//                    /*style.removeLayer("originMarker-layer-id");
-//                    style.removeSource(originMarkerGeoJsonSource);*/
-//                    style.removeLayer("destinationMarker-layer-id");
-//                    style.removeSource(destinationMarkergeoJsonSource);
-//                }
-//                //Add Current Position Icon
-//                style.addImage("origin-marker-icon-id",
-//                        BitmapFactory.decodeResource(
-//                                MainActivity.this.getResources(), R.drawable.custom_marker));
-//
-//                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
-//                        Point.fromLngLat(currentLongitute, currentLattitude)));
-//                style.addSource(originMarkerGeoJsonSource);
-//
-//                symbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
-//                symbolLayer.withProperties(
-//                        PropertyFactory.iconImage("origin-marker-icon-id")
-//                );
-//                style.addLayer(symbolLayer);
-//
-//                //Add Destination Icon
-//                style.addImage("destination-marker-icon-id",
-//                        BitmapFactory.decodeResource(
-//                                MainActivity.this.getResources(), R.drawable.custom_marker));
-//
-//                destinationMarkergeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
-//                        Point.fromLngLat(destinationLongitute, destinationLattitude)));
-//                style.addSource(destinationMarkergeoJsonSource);
-//
-//                symbolLayer2 = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
-//                symbolLayer2.withProperties(
-//                        PropertyFactory.iconImage("destination-marker-icon-id")
-//                );
-//                style.addLayer(symbolLayer2);
-//
-//                isMarkers = true;
-//                isDestinationMarkers = true;
 
                 return false;
             }
@@ -384,7 +290,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
                 //Send Current ROute GeoJson file to server
-                //response.body().waypoints();
                 currentRoute = response.body().routes().get(0);
                 socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
 
@@ -507,7 +412,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             updateLocation(currentLocation);
                             // update score display once it is implemented
                             updateTimeLeft(timeLeft);
-                            //updateScore(score);
+                            updateScore(score);
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -518,13 +423,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     };
 
     private void updateTimeLeft(double timeLeft) {
-        Toast.makeText(getApplicationContext(),"Time Left: " + timeLeft, Toast.LENGTH_LONG).show();
+        TextView timeText = findViewById(R.id.textView_Time);
+        timeText.setText(Integer.toString((int) floor(timeLeft)) + " Seconds");
     }
 
     private void updateScore(int score) {
-        //Toast.makeText(getApplicationContext(),"Score: " + score, Toast.LENGTH_SHORT).show();
         TextView scoreText = findViewById(R.id.textView_Score);
-        scoreText.setText(score);
+        scoreText.setText(Integer.toString(score));
     }
 
     public void updateLocation(Point currentLocationFromServer) {
