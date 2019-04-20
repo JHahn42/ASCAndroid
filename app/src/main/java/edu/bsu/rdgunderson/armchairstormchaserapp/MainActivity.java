@@ -19,6 +19,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import static java.lang.Math.floor;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -94,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isDestinationMarkers = false;
     private boolean hasSetRoute = false;
     private boolean loggedIn = false;
+    private boolean inFocus = true;
 
     public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
 
@@ -130,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
                 // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
                 socket.on("updatePlayer", onUpdatePlayer);
+                socket.on("destinationReached", destinationReached);
                 socket.connect();
 
                 //Add Current Position Icon on App start
@@ -175,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when timer task runs if the player has selected a route
-                                if (hasSetRoute) {
+                                if (inFocus) {
                                     socket.emit("getPlayerUpdate");
                                     updateMarkerPosition();
                                 }
@@ -363,6 +368,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private Emitter.Listener destinationReached = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (inFocus) {
+                        removeRoute();
+                        hasSetRoute = false;
+                    } else {
+                        NotificationManager notif=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+                        Notification notify=new Notification.Builder
+                                (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
+                                setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.custom_marker).build();
+                        notify.flags |= Notification.FLAG_AUTO_CANCEL;
+                        notif.notify(0, notify);
+                    }
+                }
+            });
+        }
+    };
+
     private void updateTimeLeft(double timeLeft) {
         TextView timeText = findViewById(R.id.textView_Time);
         timeText.setText(Integer.toString((int) floor(timeLeft)) + " Seconds");
@@ -377,7 +404,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         currentLongitute = currentLocationFromServer.longitude();
         currentLattitude = currentLocationFromServer.latitude();
         currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
-        //System.out.println(currentLocation);
     }
 
     private void updateMarkerPosition() {
@@ -417,12 +443,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onResume() {
+        inFocus = true;
         super.onResume();
         mapView.onResume();
     }
 
     @Override
     public void onPause() {
+        inFocus = false;
         super.onPause();
         mapView.onPause();
     }
