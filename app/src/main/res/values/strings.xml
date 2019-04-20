@@ -12,4 +12,5 @@
     <string name="button_StopTravel">Stop Travel</string>
     <string name="logo">Logo</string>
     <string name="background">background</string>
+    <string name="selectNewRouteLabel">Please select a new route</string>
 </resources>

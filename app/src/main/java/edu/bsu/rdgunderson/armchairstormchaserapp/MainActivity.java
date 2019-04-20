@@ -417,8 +417,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void toggleStopTravelButton(boolean enableDisable) {
+        int toggleButton;
+        int toggleText;
+        if (enableDisable) {
+            toggleButton = View.VISIBLE;
+            toggleText = View.INVISIBLE;
+        } else {
+            toggleButton = View.INVISIBLE;
+            toggleText = View.VISIBLE;
+        }
         Button stopTravel = findViewById(R.id.button_StopTravel);
-        stopTravel.setEnabled(enableDisable);
+        stopTravel.setVisibility(toggleButton);
+        TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
+        selectRoute.setVisibility(toggleText);
     }
 
     public void login(View view) {

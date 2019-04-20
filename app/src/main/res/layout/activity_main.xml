@@ -75,10 +75,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:enabled="false"
+        android:enabled="true"
         android:onClick="stopTravel"
         android:text="@string/button_StopTravel"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_selectNewRoute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/selectNewRouteLabel"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/button_StopTravel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
