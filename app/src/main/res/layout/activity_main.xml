@@ -86,7 +86,7 @@
         android:id="@+id/textView_selectNewRoute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/selectNewRouteLabel"
+        android:text="@string/selectStartingLocationLabel"
         android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/button_StopTravel"
         app:layout_constraintEnd_toEndOf="parent"

@@ -14,6 +14,7 @@
     <string name="logo">Logo</string>
     <string name="background">background</string>
     <string name="selectNewRouteLabel">Please select a new route</string>
+    <string name="selectStartingLocationLabel">Please select a starting location</string>
     <string name="areYouSureLabel">Are you sure?</string>
     <string name="yesButton">Yes</string>
     <string name="noButton">No</string>

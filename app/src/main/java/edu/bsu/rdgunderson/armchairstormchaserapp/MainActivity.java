@@ -15,6 +15,8 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 import static java.lang.Math.floor;
@@ -68,10 +70,12 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private MapView mapView;
     private MapboxMap map;
-    private double currentLattitude = 40.193378;
-    private double currentLongitute = -85.386360;
+    /*private double currentLatitude = 40.193378;
+    private double currentLongitude = -85.386360;*/
+    private MapView mapView;
+    private double currentLatitude;
+    private double currentLongitude;
     private double destinationLattitude;
     private double destinationLongitute;
 
@@ -83,7 +87,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String ICON_SOURCE_ID = "icon-source-id";
     private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
     private DirectionsRoute currentRoute;
-    private MapboxDirections client;
     private Point origin;
     private Point destination;
     private SymbolLayer originMarkerSymbolLayer = null;
@@ -95,16 +98,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View inputConfirmationScreen;
     private View endOfDayScreen;
 
-    private boolean isMarkers = false;
+//    private boolean isMarkers = false;
 //    private boolean isWeather = false;
-    private boolean isDestinationMarkers = false;
+//    private boolean isDestinationMarkers = false;
     private boolean hasSetRoute = false;
-    private boolean loggedIn = false;
+//    private boolean loggedIn = false;
     private boolean inFocus = true;
     private boolean endTravelEnabledDisable = false;
     public boolean isEndOfDay = false;
+    public boolean isSelectingStartingLocation = true;
 
-    public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
+    public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
 
     private Socket socket;
 
@@ -144,11 +148,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 socket.connect();
 
                 //Add Current Position Icon on App start
-                style.addImage("origin-marker-icon-id",
+                /*style.addImage("origin-marker-icon-id",
                         BitmapFactory.decodeResource(
                                 MainActivity.this.getResources(), R.drawable.asc_logo_small));
                 originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
-                        Point.fromLngLat(currentLongitute, currentLattitude)));
+                        Point.fromLngLat(currentLongitude, currentLatitude)));
                 style.addSource(originMarkerGeoJsonSource);
 
                 originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
@@ -158,42 +162,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 style.addLayer(originMarkerSymbolLayer.withProperties(
                         iconAllowOverlap(true),
                         iconIgnorePlacement(true)
-                ));
+                ));*/
                 map = mapboxMap;
                 startTimer();
             }
 
-            public void startTimer() {
+            void startTimer() {
                 timer = new Timer();
                 initializeTimerTask();
                 timer.schedule(timerTask, 0, Constants.REFRESH_RATE_IN_SECONDS * 1000);
             }
 
-            public void stoptimertask(View view) {
+            /*public void stoptimertask(View view) {
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
                     timer = null;
                 }
-            }
+            }*/
 
-            public void initializeTimerTask() {
+            void initializeTimerTask() {
 
                 timerTask = new TimerTask() {
                     public void run() {
                         handler.post(new Runnable() {
                             public void run() {
-                                //Update player when timer task runs if the player has selected a route
-                                if (inFocus) {
+                                //Update player when timer task runs if the player has selected a route and is not selecting a starting location
+                                if (inFocus && !isSelectingStartingLocation) {
                                     socket.emit("getPlayerUpdate");
                                     updateMarkerPosition();
-                                    if (hasSetRoute) {
-                                        endTravelEnabledDisable = true;
-                                    } else {
-                                        endTravelEnabledDisable = false;
-                                    }
-                                    toggleStopTravelButton(endTravelEnabledDisable);
                                 }
+                                endTravelEnabledDisable = hasSetRoute;
+                                toggleStopTravelButton(endTravelEnabledDisable);
                             }
                         });
                     }
@@ -205,20 +205,52 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
                 if (!endTravelEnabledDisable) {
-                    hasSetRoute = true;
-                    destinationLattitude = point.getLatitude();
-                    destinationLongitute = point.getLongitude();
-                    origin = Point.fromLngLat(currentLongitute, currentLattitude);
-                    destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
-                    Style style = mapboxMap.getStyle();
-                    initSource(style);
-                    initLayers(style);
-                    getRoute(style, origin, destination);
-                    updateMarkerPosition();
+                    if (!isSelectingStartingLocation) {
+                        hasSetRoute = true;
+                        destinationLattitude = point.getLatitude();
+                        destinationLongitute = point.getLongitude();
+                        origin = Point.fromLngLat(currentLongitude, currentLatitude);
+                        destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
+                        Style style = mapboxMap.getStyle();
+                        initSource(style);
+                        initLayers(style);
+                        getRoute(style, origin, destination);
+                        updateMarkerPosition();
+                    } else {
+                        currentLatitude = point.getLatitude();
+                        currentLongitude = point.getLongitude();
+                        placeStartingLocationMarker();
+                        changeStartingLocationText();
+                        isSelectingStartingLocation = false;
+                    }
                 }
                 return false;
             }
         });
+    }
+
+    private void placeStartingLocationMarker() {
+        Style style = map.getStyle();
+        style.addImage("origin-marker-icon-id",
+                BitmapFactory.decodeResource(
+                        MainActivity.this.getResources(), R.drawable.asc_logo_small));
+        originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
+                Point.fromLngLat(currentLongitude, currentLatitude)));
+        style.addSource(originMarkerGeoJsonSource);
+
+        originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+        originMarkerSymbolLayer.withProperties(
+                PropertyFactory.iconImage("origin-marker-icon-id")
+        );
+        style.addLayer(originMarkerSymbolLayer.withProperties(
+                iconAllowOverlap(true),
+                iconIgnorePlacement(true)
+        ));
+    }
+
+    private void changeStartingLocationText() {
+        TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
+        selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectNewRouteLabel));
     }
 
     private void initSource(@NonNull Style loadedMapStyle) {
@@ -259,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void getRoute(@NonNull final Style style, Point origin, Point destination) {
 
-        client = MapboxDirections.builder()
+        MapboxDirections client = MapboxDirections.builder()
                 .origin(origin)
                 .destination(destination)
                 .overview(DirectionsCriteria.OVERVIEW_SIMPLIFIED)
@@ -270,9 +302,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
-            public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
+            public void onResponse(@NonNull Call<DirectionsResponse> call, @NonNull Response<DirectionsResponse> response) {
                 System.out.println(call.request().url().toString());
-                Timber.d("Response code: " + response.code());
+                Timber.d("Response code: %s", response.code());
                 if (response.body() == null) {
                     Timber.e("No routes found, make sure you set the right user and access token.");
                     return;
@@ -287,8 +319,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             @Override
-            public void onFailure(Call<DirectionsResponse> call, Throwable throwable) {
-                Timber.e("Error: " + throwable.getMessage());
+            public void onFailure(@NonNull Call<DirectionsResponse> call, @NonNull Throwable throwable) {
+                Timber.e("Error: %s", throwable.getMessage());
             }
         });
     }
@@ -299,13 +331,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (source != null) {
                 Timber.d("onResponse: source != null");
                 source.setGeoJson(FeatureCollection.fromFeature(
-                        Feature.fromGeometry(LineString.fromPolyline(currentRoute.geometry(), PRECISION_6))));
+                        Feature.fromGeometry(LineString.fromPolyline(Objects.requireNonNull(currentRoute.geometry()), PRECISION_6))));
             }
         }
     }
 
     private void removeRoute() {
         Style style = map.getStyle();
+        assert style != null;
         style.removeLayer(ROUTE_LAYER_ID);
     }
 
@@ -331,7 +364,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            return new String(buffer, "UTF-8");
+            return new String(buffer, StandardCharsets.UTF_8);
 
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -386,6 +419,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
                                 setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
                         notify.flags |= Notification.FLAG_AUTO_CANCEL;
+                        assert notificationManager != null;
                         notificationManager.notify(0, notify);
                     }
                 }
@@ -441,9 +475,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void updateLocation(Point currentLocationFromServer) {
-        currentLongitute = currentLocationFromServer.longitude();
-        currentLattitude = currentLocationFromServer.latitude();
-        currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
+        currentLongitude = currentLocationFromServer.longitude();
+        currentLatitude = currentLocationFromServer.latitude();
+        currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
     }
 
     private void updateMarkerPosition() {
@@ -467,16 +501,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void toggleStopTravelButton(boolean enableDisable) {
         int toggleButton;
         int toggleText;
+        Button stopTravel = findViewById(R.id.button_StopTravel);
+        TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
         if (enableDisable) {
             toggleButton = View.VISIBLE;
             toggleText = View.INVISIBLE;
+//            selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectNewRouteLabel));
         } else {
             toggleButton = View.INVISIBLE;
             toggleText = View.VISIBLE;
         }
-        Button stopTravel = findViewById(R.id.button_StopTravel);
         stopTravel.setVisibility(toggleButton);
-        TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
         selectRoute.setVisibility(toggleText);
     }
 
@@ -497,7 +532,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void login(View view) {
-        TextView usernameTextBox = findViewById(R.id.password_text_input);
+        TextView usernameTextBox = findViewById(R.id.userName_text_input);
         TextView passwordTextBox = findViewById(R.id.password_text_input);
         //String usernameTextInput = (String) usernameTextBox.getText();
         //String passwordTextInput = (String) passwordTextBox.getText();
@@ -514,8 +549,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void switchToLoginScreen(View view) {
         LayoutInflater inflater = getLayoutInflater();
         loginScreen = inflater.inflate(R.layout.login, null);
-        getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT));
+        getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     public void switchToMainScreen(View view) {
