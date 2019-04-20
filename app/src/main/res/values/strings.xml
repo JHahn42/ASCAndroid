@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">Armchair StormChaser</string>
+    <string name="passwordTextLabel">Password: </string>
+    <string name="usernameTextLabel">Username: </string>
+    <string name="loginButtonLabel">Login</string>
+    <string name="goBackButtonLabel">Go Back</string>
+    <string name="createUserButtonLabel">Create User</string>
+    <string name="textView_Score">_</string>
+    <string name="textView_ScoreLabel">Score: </string>
+    <string name="textView_Time">_</string>
+    <string name="textView_Time_Label">Time Left: </string>
+    <string name="button_StopTravel">Stop Travel</string>
+    <string name="logo">Logo</string>
+    <string name="background">background</string>
 </resources>

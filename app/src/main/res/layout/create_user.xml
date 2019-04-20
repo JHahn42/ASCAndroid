@@ -7,18 +7,20 @@
 
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/background_imageView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:contentDescription="@string/background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/mapbox_color_text_cursor" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/logo_imageView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="47dp"
@@ -33,16 +35,19 @@
         app:srcCompat="@drawable/asc_logo_large" />
 
     <TextView
-        android:id="@+id/textView4"
+        android:id="@+id/createUser_textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="175dp"
-        android:text="@string/loginButtonLabel"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="373dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="7dp"
+        android:text="@string/createUserButtonLabel"
         android:textSize="30sp"
-        app:layout_constraintBottom_toTopOf="@+id/login_button"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:id="@+id/linearLayout2"
@@ -55,17 +60,17 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/button">
+        app:layout_constraintTop_toBottomOf="@+id/createUser_textView">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="72dp"
+            android:layout_height="94dp"
             android:orientation="horizontal"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="541dp">
 
             <TextView
-                android:id="@+id/username_textView"
+                android:id="@+id/createUsername_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/usernameTextLabel"
@@ -84,13 +89,13 @@
 
         <LinearLayout
             android:layout_width="385dp"
-            android:layout_height="87dp"
+            android:layout_height="113dp"
             android:orientation="horizontal"
             tools:layout_editor_absoluteX="8dp"
             tools:layout_editor_absoluteY="636dp">
 
             <TextView
-                android:id="@+id/password_textView"
+                android:id="@+id/createPassword_textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/passwordTextLabel"
@@ -101,7 +106,7 @@
                 android:id="@+id/password_text_input"
                 android:layout_width="186dp"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="textPassword"
                 tools:layout_editor_absoluteX="178dp"
                 tools:layout_editor_absoluteY="595dp" />
         </LinearLayout>
@@ -109,16 +114,16 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/login_button"
-        android:layout_width="86dp"
+        android:id="@+id/createUser_button"
+        android:layout_width="118dp"
         android:layout_height="71dp"
-        android:layout_marginBottom="6dp"
+        android:layout_marginBottom="16dp"
         android:onClick="login"
-        android:text="@string/loginButtonLabel"
+        android:text="@string/createUserButtonLabel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/button"
@@ -128,7 +133,7 @@
         android:onClick="switchToMainScreen"
         android:text="@string/goBackButtonLabel"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
-        app:layout_constraintStart_toStartOf="@+id/imageView3"
+        app:layout_constraintStart_toStartOf="@+id/background_imageView"
         app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

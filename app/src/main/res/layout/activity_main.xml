@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="7dp"
         android:layout_marginTop="13dp"
-        android:text="_"
+        android:text="@string/textView_Score"
         app:layout_constraintStart_toEndOf="@+id/textView_Score_Label"
         app:layout_constraintTop_toBottomOf="@+id/textView_Time" />
 
@@ -38,7 +38,7 @@
         android:id="@+id/textView_Score_Label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Score: "
+        android:text="@string/textView_ScoreLabel"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView_Score"
         app:layout_constraintEnd_toEndOf="@+id/textView_Time_Label" />
 
@@ -48,7 +48,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="7dp"
         android:layout_marginTop="16dp"
-        android:text="_"
+        android:text="@string/textView_Time"
         app:layout_constraintStart_toEndOf="@+id/textView_Time_Label"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -57,7 +57,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="117dp"
-        android:text="Time Left: "
+        android:text="@string/textView_Time_Label"
         app:layout_constraintBaseline_toBaselineOf="@+id/textView_Time"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -66,7 +66,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="switchToLoginScreen"
-        android:text="Login"
+        android:text="@string/loginButtonLabel"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -76,7 +76,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:onClick="stopTravel"
-        android:text="Stop Travel"
+        android:text="@string/button_StopTravel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

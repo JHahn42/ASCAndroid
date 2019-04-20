@@ -111,8 +111,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             setContentView(R.layout.login);
             //When button is clicked on login screen, check if player entered exists
             //If player exists setLoggedIn = true
-        }
-        */
+        }*/
+
         setContentView(R.layout.activity_main);
         mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -140,9 +140,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //Add Current Position Icon on App start
                 style.addImage("origin-marker-icon-id",
                         BitmapFactory.decodeResource(
-                                MainActivity.this.getResources(), R.drawable.custom_marker));
-
-                //Retrieve current location from server
+                                MainActivity.this.getResources(), R.drawable.asc_logo_small));
                 originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
                         Point.fromLngLat(currentLongitute, currentLattitude)));
                 style.addSource(originMarkerGeoJsonSource);
@@ -165,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 timer.schedule(timerTask, 5000, Constants.REFRESH_RATE_IN_SECONDS * 1000);
             }
 
-            public void stoptimertask(View v) {
+            public void stoptimertask(View view) {
                 //stop the timer, if it's not already null
                 if (timer != null) {
                     timer.cancel();
@@ -197,10 +195,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 hasSetRoute = true;
                 destinationLattitude = point.getLatitude();
                 destinationLongitute = point.getLongitude();
-                //Retrieve "origin" (current location) from server
                 origin = Point.fromLngLat(currentLongitute, currentLattitude);
-                //Send Destination Information to server
-                //When destination change is sent server should automatically change course
                 destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
                 Style style = mapboxMap.getStyle();
                 initSource(style);
@@ -213,7 +208,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void initSource(@NonNull Style loadedMapStyle) {
-
         if (loadedMapStyle.getSourceAs(ROUTE_SOURCE_ID) == null) {
             loadedMapStyle.addSource(new GeoJsonSource(ROUTE_SOURCE_ID,
                     FeatureCollection.fromFeatures(new Feature[]{})));
@@ -264,7 +258,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onResponse(Call<DirectionsResponse> call, Response<DirectionsResponse> response) {
                 System.out.println(call.request().url().toString());
-
                 Timber.d("Response code: " + response.code());
                 if (response.body() == null) {
                     Timber.e("No routes found, make sure you set the right user and access token.");
@@ -273,13 +266,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     Timber.e("No routes found");
                     return;
                 }
-
                 //Send Current Route GeoJson file to server
                 currentRoute = response.body().routes().get(0);
                 socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
-
                 addRouteToStyle(style);
-
             }
 
             @Override
@@ -292,7 +282,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void addRouteToStyle(Style style) {
         if (style.isFullyLoaded()) {
             GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);
-
             if (source != null) {
                 Timber.d("onResponse: source != null");
                 source.setGeoJson(FeatureCollection.fromFeature(
@@ -378,12 +367,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         removeRoute();
                         hasSetRoute = false;
                     } else {
-                        NotificationManager notif=(NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+                        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
                         Notification notify=new Notification.Builder
                                 (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
-                                setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.custom_marker).build();
+                                setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
                         notify.flags |= Notification.FLAG_AUTO_CANCEL;
-                        notif.notify(0, notify);
+                        notificationManager.notify(0, notify);
                     }
                 }
             });
@@ -415,6 +404,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ));
             }
         }
+    }
+
+    public void login(View view) {
+        TextView usernameTextBox = findViewById(R.id.password_text_input);
+        TextView passwordTextBox = findViewById(R.id.password_text_input);
+        String usernameTextInput = (String) usernameTextBox.getText();
+        String passwordTextInput = (String) passwordTextBox.getText();
+        if (userExists(usernameTextInput, passwordTextInput)) {
+            loggedIn = true;
+        }
+    }
+
+    private boolean userExists(String usernameTextInput, String passwordTextInput) {
+        //Replace with checking "Database/Data"
+        return true;
     }
 
     public void stopTravel(View view) {
