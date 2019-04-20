@@ -31,6 +31,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
@@ -98,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean hasSetRoute = false;
     private boolean loggedIn = false;
     private boolean inFocus = true;
+    private boolean endTravelEnabledDisable = false;
 
     public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
 
@@ -160,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void startTimer() {
                 timer = new Timer();
                 initializeTimerTask();
-                timer.schedule(timerTask, 5000, Constants.REFRESH_RATE_IN_SECONDS * 1000);
+                timer.schedule(timerTask, 0, Constants.REFRESH_RATE_IN_SECONDS * 1000);
             }
 
             public void stoptimertask(View view) {
@@ -181,6 +183,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 if (inFocus) {
                                     socket.emit("getPlayerUpdate");
                                     updateMarkerPosition();
+                                    if (hasSetRoute) {
+                                        endTravelEnabledDisable = true;
+                                    } else {
+                                        endTravelEnabledDisable = false;
+                                    }
+                                    toggleStopTravelButton(endTravelEnabledDisable);
                                 }
                             }
                         });
@@ -192,16 +200,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
-                hasSetRoute = true;
-                destinationLattitude = point.getLatitude();
-                destinationLongitute = point.getLongitude();
-                origin = Point.fromLngLat(currentLongitute, currentLattitude);
-                destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
-                Style style = mapboxMap.getStyle();
-                initSource(style);
-                initLayers(style);
-                getRoute(style, origin, destination);
-                updateMarkerPosition();
+                if (!endTravelEnabledDisable) {
+                    hasSetRoute = true;
+                    destinationLattitude = point.getLatitude();
+                    destinationLongitute = point.getLongitude();
+                    origin = Point.fromLngLat(currentLongitute, currentLattitude);
+                    destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
+                    Style style = mapboxMap.getStyle();
+                    initSource(style);
+                    initLayers(style);
+                    getRoute(style, origin, destination);
+                    updateMarkerPosition();
+                }
                 return false;
             }
         });
@@ -404,6 +414,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ));
             }
         }
+    }
+
+    private void toggleStopTravelButton(boolean enableDisable) {
+        Button stopTravel = findViewById(R.id.button_StopTravel);
+        stopTravel.setEnabled(enableDisable);
     }
 
     public void login(View view) {
