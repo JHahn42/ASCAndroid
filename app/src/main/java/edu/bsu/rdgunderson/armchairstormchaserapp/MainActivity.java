@@ -92,6 +92,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Timer timer;
     TimerTask timerTask;
     private View login;
+    private View inputConfirmation;
 
     private boolean isMarkers = false;
 //    private boolean isWeather = false;
@@ -432,6 +433,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         selectRoute.setVisibility(toggleText);
     }
 
+    public void stopTravelButtonNo(View view){
+        removeInputConfirmationScreen();
+    }
+
+    public void stopTravelButtonYes(View view){
+        socket.emit("stopTravel");
+        removeRoute();
+        updateTimeLeft(0);
+        hasSetRoute = false;
+        removeInputConfirmationScreen();
+    }
+
+    private void removeInputConfirmationScreen(){
+        ((ViewGroup) inputConfirmation.getParent()).removeView(inputConfirmation);
+    }
+
     public void login(View view) {
         TextView usernameTextBox = findViewById(R.id.password_text_input);
         TextView passwordTextBox = findViewById(R.id.password_text_input);
@@ -448,10 +465,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void stopTravel(View view) {
-        socket.emit("stopTravel");
-        removeRoute();
-        updateTimeLeft(0);
-        hasSetRoute = false;
+        LayoutInflater inflater = getLayoutInflater();
+        inputConfirmation = inflater.inflate(R.layout.input_confirmation, null);
+        getWindow().addContentView(inputConfirmation, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
     }
 
     public void switchToLoginScreen(View view) {
