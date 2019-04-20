@@ -5,6 +5,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <ImageView
+        android:id="@+id/background_imageView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@string/background"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        app:srcCompat="@drawable/mapbox_color_text_cursor" />
+
     <LinearLayout
         android:id="@+id/linearLayout3"
         android:layout_width="0dp"
@@ -30,17 +43,16 @@
                 android:id="@+id/dailyScoreLabel_textView"
                 android:layout_width="89dp"
                 android:layout_height="wrap_content"
-                android:text="Daily Score:"
+                android:text="@string/dailyScoreLabel"
                 tools:ignore="MissingConstraints"
                 tools:layout_editor_absoluteX="93dp"
                 tools:layout_editor_absoluteY="545dp" />
 
             <TextView
                 android:id="@+id/dailyScore_textView"
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="[PLACEHOLDER]"
+                android:text="@string/dailyScore"
                 tools:ignore="MissingConstraints"
                 tools:layout_editor_absoluteX="93dp"
                 tools:layout_editor_absoluteY="545dp" />
@@ -58,7 +70,7 @@
                 android:id="@+id/totalScoreLabel_textView"
                 android:layout_width="89dp"
                 android:layout_height="wrap_content"
-                android:text="Total Score"
+                android:text="@string/totalScoreLabel"
                 tools:ignore="MissingConstraints"
                 tools:layout_editor_absoluteX="93dp"
                 tools:layout_editor_absoluteY="606dp" />
@@ -68,7 +80,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="[PLACEHOLDER]"
+                android:text="@string/totalScore"
                 tools:ignore="MissingConstraints"
                 tools:layout_editor_absoluteX="93dp"
                 tools:layout_editor_absoluteY="606dp" />
@@ -85,6 +97,7 @@
         android:layout_marginTop="59dp"
         android:layout_marginEnd="47dp"
         android:layout_marginBottom="60dp"
+        android:contentDescription="@string/logo"
         app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -97,7 +110,8 @@
         android:layout_width="142dp"
         android:layout_height="69dp"
         android:layout_marginBottom="6dp"
-        android:text="Begin New Day"
+        android:onClick="beginNewDay"
+        android:text="@string/beginNewDayButton"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -109,7 +123,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="174dp"
-        android:text="End of Day"
+        android:text="@string/endOfDayLabel"
         android:textSize="30sp"
         app:layout_constraintBottom_toTopOf="@+id/beginNewDay_button"
         app:layout_constraintEnd_toEndOf="parent"

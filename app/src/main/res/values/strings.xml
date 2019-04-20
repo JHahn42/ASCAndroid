@@ -3,6 +3,7 @@
     <string name="passwordTextLabel">Password: </string>
     <string name="usernameTextLabel">Username: </string>
     <string name="loginButtonLabel">Login</string>
+    <string name="logoutButtonLabel">Logout</string>
     <string name="goBackButtonLabel">Go Back</string>
     <string name="createUserButtonLabel">Create User</string>
     <string name="textView_Score">_</string>
@@ -16,4 +17,10 @@
     <string name="areYouSureLabel">Are you sure?</string>
     <string name="yesButton">Yes</string>
     <string name="noButton">No</string>
+    <string name="dailyScoreLabel">Daily Score: </string>
+    <string name="totalScoreLabel">Total Score: </string>
+    <string name="dailyScore">_</string>
+    <string name="totalScore">_</string>
+    <string name="beginNewDayButton">Begin New Day</string>
+    <string name="endOfDayLabel">End of Day</string>
 </resources>

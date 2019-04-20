@@ -91,8 +91,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     final Handler handler = new Handler();
     Timer timer;
     TimerTask timerTask;
-    private View login;
-    private View inputConfirmation;
+    private View loginScreen;
+    private View inputConfirmationScreen;
+    private View endOfDayScreen;
 
     private boolean isMarkers = false;
 //    private boolean isWeather = false;
@@ -101,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean loggedIn = false;
     private boolean inFocus = true;
     private boolean endTravelEnabledDisable = false;
+    public boolean isEndOfDay = false;
 
     public Point currentLocation = Point.fromLngLat(currentLongitute, currentLattitude);
 
@@ -111,8 +113,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
         /*while (!loggedIn) {
-            setContentView(R.layout.login);
-            //When button is clicked on login screen, check if player entered exists
+            setContentView(R.layout.loginScreen);
+            //When button is clicked on loginScreen screen, check if player entered exists
             //If player exists setLoggedIn = true
         }*/
 
@@ -138,6 +140,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
                 socket.on("updatePlayer", onUpdatePlayer);
                 socket.on("destinationReached", destinationReached);
+                socket.on("endOfDay", endOfDay);
                 socket.connect();
 
                 //Add Current Position Icon on App start
@@ -390,6 +393,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    //All End Of Day Screen methods
+    private Emitter.Listener endOfDay = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    int dailyScore = 0;
+                    int totalScore = 0;
+                    isEndOfDay = true;
+                    setScoreOnEndOfDayScreen(dailyScore, totalScore);
+                    switchToEndOfDayScreen();
+                }
+            });
+        }
+    };
+
+    private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
+        TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
+        TextView totalScoreText = findViewById(R.id.totalScore_textView);
+        dailyScoreText.setText(Integer.toString(dailyScore));
+        totalScoreText.setText(Integer.toString(totalScore));
+    }
+
+    public void beginNewDay(View view) {
+        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+    }
+
+    public void switchToEndOfDayScreen() {
+        LayoutInflater inflater = getLayoutInflater();
+        endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
+        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
+    }
+
+    /////////////////////////////////////////////////
+
     private void updateTimeLeft(double timeLeft) {
         TextView timeText = findViewById(R.id.textView_Time);
         timeText.setText(Integer.toString((int) floor(timeLeft)) + " Seconds");
@@ -415,6 +455,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ));
             }
         }
+    }
+
+    public void stopTravel(View view) {
+        LayoutInflater inflater = getLayoutInflater();
+        inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
+        getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+                ViewGroup.LayoutParams.FILL_PARENT));
     }
 
     private void toggleStopTravelButton(boolean enableDisable) {
@@ -446,17 +493,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void removeInputConfirmationScreen(){
-        ((ViewGroup) inputConfirmation.getParent()).removeView(inputConfirmation);
+        ((ViewGroup) inputConfirmationScreen.getParent()).removeView(inputConfirmationScreen);
     }
 
     public void login(View view) {
         TextView usernameTextBox = findViewById(R.id.password_text_input);
         TextView passwordTextBox = findViewById(R.id.password_text_input);
-        String usernameTextInput = (String) usernameTextBox.getText();
-        String passwordTextInput = (String) passwordTextBox.getText();
-        if (userExists(usernameTextInput, passwordTextInput)) {
-            loggedIn = true;
-        }
+        //String usernameTextInput = (String) usernameTextBox.getText();
+        //String passwordTextInput = (String) passwordTextBox.getText();
+        //if (userExists(usernameTextInput, passwordTextInput)) {
+            //loggedIn = true;
+        //}
     }
 
     private boolean userExists(String usernameTextInput, String passwordTextInput) {
@@ -464,22 +511,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    public void stopTravel(View view) {
-        LayoutInflater inflater = getLayoutInflater();
-        inputConfirmation = inflater.inflate(R.layout.input_confirmation, null);
-        getWindow().addContentView(inputConfirmation, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT));
-    }
-
     public void switchToLoginScreen(View view) {
         LayoutInflater inflater = getLayoutInflater();
-        login = inflater.inflate(R.layout.login, null);
-        getWindow().addContentView(login, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
+        loginScreen = inflater.inflate(R.layout.login, null);
+        getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                 ViewGroup.LayoutParams.FILL_PARENT));
     }
 
     public void switchToMainScreen(View view) {
-        ((ViewGroup) login.getParent()).removeView(login);
+        ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
     }
 
     @Override
