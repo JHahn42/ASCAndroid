@@ -24,4 +24,6 @@
     <string name="totalScore">_</string>
     <string name="beginNewDayButton">Begin New Day</string>
     <string name="endOfDayLabel">End of Day</string>
+    <string name="usernameHint">username</string>
+    <string name="passwordHint">passsword</string>
 </resources>

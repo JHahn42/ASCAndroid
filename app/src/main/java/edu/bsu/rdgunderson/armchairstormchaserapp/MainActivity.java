@@ -76,11 +76,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MapView mapView;
     private double currentLatitude;
     private double currentLongitude;
-    private double destinationLattitude;
-    private double destinationLongitute;
-
+    private double destinationLatitude;
+    private double destinationLongitude;
     private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
-
     private static final String ROUTE_LAYER_ID = "route-layer-id";
     private static final String ROUTE_SOURCE_ID = "route-source-id";
     private static final String ICON_LAYER_ID = "icon-layer-id";
@@ -102,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //    private boolean isWeather = false;
 //    private boolean isDestinationMarkers = false;
     private boolean hasSetRoute = false;
-//    private boolean loggedIn = false;
+    private boolean loggedIn = false;
     private boolean inFocus = true;
     private boolean endTravelEnabledDisable = false;
     public boolean isEndOfDay = false;
@@ -135,9 +133,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onStyleLoaded(@NonNull Style style) {
                 createGeoJsonSource(style);
                 addPolygonLayer(style);
-                ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
-                socket = app.getSocket();
 
+                ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
+
+                socket = app.getSocket();
                 // socket.on(Socket.EVENT_CONNECT, onConnect);
                 // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
                 // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
@@ -147,23 +146,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 socket.on("endOfDay", endOfDay);
                 socket.connect();
 
-                //Add Current Position Icon on App start
-                /*style.addImage("origin-marker-icon-id",
-                        BitmapFactory.decodeResource(
-                                MainActivity.this.getResources(), R.drawable.asc_logo_small));
-                originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
-                        Point.fromLngLat(currentLongitude, currentLatitude)));
-                style.addSource(originMarkerGeoJsonSource);
-
-                originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
-                originMarkerSymbolLayer.withProperties(
-                        PropertyFactory.iconImage("origin-marker-icon-id")
-                );
-                style.addLayer(originMarkerSymbolLayer.withProperties(
-                        iconAllowOverlap(true),
-                        iconIgnorePlacement(true)
-                ));*/
                 map = mapboxMap;
+
                 startTimer();
             }
 
@@ -172,14 +156,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 initializeTimerTask();
                 timer.schedule(timerTask, 0, Constants.REFRESH_RATE_IN_SECONDS * 1000);
             }
-
-            /*public void stoptimertask(View view) {
-                //stop the timer, if it's not already null
-                if (timer != null) {
-                    timer.cancel();
-                    timer = null;
-                }
-            }*/
 
             void initializeTimerTask() {
 
@@ -207,10 +183,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (!endTravelEnabledDisable) {
                     if (!isSelectingStartingLocation) {
                         hasSetRoute = true;
-                        destinationLattitude = point.getLatitude();
-                        destinationLongitute = point.getLongitude();
+                        destinationLatitude = point.getLatitude();
+                        destinationLongitude = point.getLongitude();
                         origin = Point.fromLngLat(currentLongitude, currentLatitude);
-                        destination = Point.fromLngLat(destinationLongitute, destinationLattitude);
+                        destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
                         Style style = mapboxMap.getStyle();
                         initSource(style);
                         initLayers(style);
@@ -221,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLongitude = point.getLongitude();
                         placeStartingLocationMarker();
                         changeStartingLocationText();
+//                        socket.emit("selectStartingLocation", currentLatitude, currentLongitude);
                         isSelectingStartingLocation = false;
                     }
                 }
@@ -303,8 +280,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
             public void onResponse(@NonNull Call<DirectionsResponse> call, @NonNull Response<DirectionsResponse> response) {
-                System.out.println(call.request().url().toString());
-                Timber.d("Response code: %s", response.code());
+//                System.out.println(call.request().url().toString());
+//                Timber.d("Response code: %s", response.code());
                 if (response.body() == null) {
                     Timber.e("No routes found, make sure you set the right user and access token.");
                     return;
@@ -320,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onFailure(@NonNull Call<DirectionsResponse> call, @NonNull Throwable throwable) {
-                Timber.e("Error: %s", throwable.getMessage());
+//                Timber.e("Error: %s", throwable.getMessage());
             }
         });
     }
@@ -458,8 +435,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void switchToEndOfDayScreen() {
         LayoutInflater inflater = getLayoutInflater();
         endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
-        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT));
+        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     /////////////////////////////////////////////////
@@ -494,8 +471,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void stopTravel(View view) {
         LayoutInflater inflater = getLayoutInflater();
         inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
-        getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
-                ViewGroup.LayoutParams.FILL_PARENT));
+        getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     private void toggleStopTravelButton(boolean enableDisable) {
@@ -506,7 +483,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (enableDisable) {
             toggleButton = View.VISIBLE;
             toggleText = View.INVISIBLE;
-//            selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectNewRouteLabel));
         } else {
             toggleButton = View.INVISIBLE;
             toggleText = View.VISIBLE;
@@ -534,11 +510,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void login(View view) {
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         TextView passwordTextBox = findViewById(R.id.password_text_input);
-        //String usernameTextInput = (String) usernameTextBox.getText();
-        //String passwordTextInput = (String) passwordTextBox.getText();
-        //if (userExists(usernameTextInput, passwordTextInput)) {
-            //loggedIn = true;
-        //}
+        if (usernameTextBox.getText() != null && passwordTextBox.getText() != null) {
+            String usernameTextInput = usernameTextBox.getText().toString();
+            String passwordTextInput = passwordTextBox.getText().toString();
+            if (userExists(usernameTextInput, passwordTextInput)) {
+//                socket.emit("login", usernameTextInput, Point.fromLngLat(currentLongitude, currentLatitude), 0, 0, 0);
+                loggedIn = true;
+            }
+        }
+    }
+
+    public void logout(View view) {
+//        socket.emit("logoff");
+        switchToLoginScreen(view);
     }
 
     private boolean userExists(String usernameTextInput, String passwordTextInput) {

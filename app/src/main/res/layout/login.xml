@@ -76,6 +76,7 @@
                 android:id="@+id/userName_text_input"
                 android:layout_width="186dp"
                 android:layout_height="wrap_content"
+                android:hint="@string/usernameHint"
                 android:inputType="text"
                 tools:layout_editor_absoluteX="178dp"
                 tools:layout_editor_absoluteY="530dp" />
@@ -101,7 +102,8 @@
                 android:id="@+id/password_text_input"
                 android:layout_width="186dp"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:hint="@string/passwordHint"
+                android:inputType="text|textPassword"
                 tools:layout_editor_absoluteX="178dp"
                 tools:layout_editor_absoluteY="595dp" />
         </LinearLayout>
