@@ -22,10 +22,6 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOutlineColor;
 import static java.lang.Math.floor;
 
 import android.app.Notification;
@@ -37,14 +33,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
-import com.google.gson.JsonArray;
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
@@ -55,7 +48,6 @@ import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.MultiPolygon;
 import com.mapbox.geojson.Point;
 import com.mapbox.geojson.Polygon;
-import com.mapbox.geojson.utils.PolylineUtils;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
@@ -70,8 +62,6 @@ import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import static com.mapbox.core.constants.Constants.PRECISION_6;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
@@ -115,6 +105,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean endTravelEnabledDisable = false;
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
+
+    private double scoreMultiplier = 1;
+    private boolean continueFromLastLoc = false;
 
     public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
 
@@ -235,7 +228,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             //Change instruction text to reflect change
                             changeStartingLocationText();
                             //Emit to server where the player now is
-//                        socket.emit("selectStartingLocation", currentLatitude, currentLongitude);
+                            if(continueFromLastLoc) {
+                                scoreMultiplier = 1.2;
+                            }
+                            else {
+                                scoreMultiplier = 1;
+                            }
+                            socket.emit("startLocationSelect", currentLatitude, currentLongitude, scoreMultiplier);
                             //Mark player as not selecting a starting location
                             isSelectingStartingLocation = false;
                         }
@@ -466,10 +465,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
 
                         JSONArray wind = weather.getJSONArray(4);
-                        Log.d("WIND", wind.toString());
                         if(wind.length() > 0) {
                             windPoints = fillPointStorm(wind);
-                            addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#a7c5c6");
+                            addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#199606");
                         }
 
                         JSONArray tornado = weather.getJSONArray(5);
@@ -478,22 +476,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             addPointLayer(map.getStyle(), "tornado_layer", "tornado_source", tornadoPoints, "#960606");
                         }
 
-//                        JSONArray hail = weather.getJSONArray(6);
-//                        if(hail.length() > 0) {
-//                            fillHailStorm(hail);
-//                            if(!hailSmall.isEmpty()) {
-//                                addPointLayer(map.getStyle(), "", "", hailSmall);
-//                            }
-//                            if(!hailOneInch.isEmpty()) {
-//                                addPointLayer(map.getStyle(), "", "", hailOneInch);
-//                            }
-//                            if(!hailTwoInch.isEmpty()) {
-//                                addPointLayer(map.getStyle(), "", "", hailTwoInch);
-//                            }
-//                            if(!hailThreeInch.isEmpty()) {
-//                                addPointLayer(map.getStyle(), "", "", hailThreeInch);
-//                            }
-//                        }
+                        JSONArray hail = weather.getJSONArray(6);
+                        if(hail.length() > 0) {
+                            fillHailStorm(hail);
+                            if(!hailSmall.isEmpty()) {
+                                addPointLayer(map.getStyle(), "hail_small_layer", "hail_small_source", hailSmall, "#b0a5ff");
+                            }
+                            if(!hailOneInch.isEmpty()) {
+                                addPointLayer(map.getStyle(), "hail_one_layer", "hail_one_source", hailOneInch, "#8173ef");
+                            }
+                            if(!hailTwoInch.isEmpty()) {
+                                addPointLayer(map.getStyle(), "hail_two_layer", "hail_two_source", hailTwoInch, "#5545d1");
+                            }
+                            if(!hailThreeInch.isEmpty()) {
+                                addPointLayer(map.getStyle(), "hail_three_layer", "hail_three_source", hailThreeInch, "#140587");
+                            }
+                        }
 
 
                     } catch (JSONException e) {
@@ -532,6 +530,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             tempFeat.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
         }
         return tempFeat;
+    }
+
+    private void fillHailStorm(JSONArray hail) throws JSONException {
+        hailSmall.clear();
+        hailOneInch.clear();
+        hailTwoInch.clear();
+        hailThreeInch.clear();
+
+        for(int i = 0; i < hail.length(); i++) {
+            JSONArray coordinates = hail.getJSONObject(i).getJSONArray("coordinates");
+            int size = hail.getJSONObject(i).getInt("Size");
+            if(size < 100) {
+                hailSmall.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 100 && size < 200) {
+                hailOneInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 200 && size < 300) {
+                hailTwoInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 300) {
+                hailThreeInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+        }
+
     }
 
     private Emitter.Listener destinationReached = new Emitter.Listener() {
