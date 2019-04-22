@@ -16,9 +16,16 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.circleColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOutlineColor;
 import static java.lang.Math.floor;
 
 import android.app.Notification;
@@ -30,12 +37,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.gson.JsonArray;
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
@@ -43,19 +52,25 @@ import com.mapbox.api.directions.v5.models.DirectionsRoute;
 import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.LineString;
+import com.mapbox.geojson.MultiPolygon;
 import com.mapbox.geojson.Point;
+import com.mapbox.geojson.Polygon;
+import com.mapbox.geojson.utils.PolylineUtils;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
+import com.mapbox.mapboxsdk.style.sources.VectorSource;
+
 import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
 import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
@@ -110,9 +125,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private Socket socket;
 
+    private MultiPolygon tornadoWarnings;
+    private MultiPolygon tornadoWatches;
+    private MultiPolygon tsWarnings;
+    private MultiPolygon tsWatches;
+    private List<Feature> windPoints = new ArrayList<>();
+    private List<Feature> tornadoPoints = new ArrayList<>();
+    private List<Feature> hailSmall = new ArrayList<>();
+    private List<Feature> hailOneInch = new ArrayList<>();
+    private List<Feature> hailTwoInch = new ArrayList<>();
+    private List<Feature> hailThreeInch = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
+
+        socket = app.getSocket();
+        // socket.on(Socket.EVENT_CONNECT, onConnect);
+        // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
+        // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
+        // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
+        socket.on("updatePlayer", onUpdatePlayer);
+        socket.on("destinationReached", destinationReached);
+        socket.on("endOfDay", endOfDay);
+        socket.on("weatherUpdate", weatherUpdate);
+        socket.connect();
+
         Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
         /*while (!loggedIn) {
             setContentView(R.layout.loginScreen);
@@ -131,22 +171,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
             @Override
             public void onStyleLoaded(@NonNull Style style) {
-                createGeoJsonSource(style);
-                addPolygonLayer(style);
-
-                ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
-
-                socket = app.getSocket();
-                // socket.on(Socket.EVENT_CONNECT, onConnect);
-                // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
-                // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
-                // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-                socket.on("updatePlayer", onUpdatePlayer);
-                socket.on("destinationReached", destinationReached);
-                socket.on("endOfDay", endOfDay);
-                socket.connect();
 
                 map = mapboxMap;
+
+                socket.emit("getWeatherUpdate");
 
                 startTimer();
             }
@@ -319,19 +347,32 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         style.removeLayer(ROUTE_LAYER_ID);
     }
 
-    private void createGeoJsonSource(@NonNull Style loadedMapStyle) {
-        loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID,
-                loadJsonFromAsset("Tornado_Watch.geojson")));
-        /*CustomGeometrySource source = new CustomGeometrySource("geojson-source", (FeatureCollection.fromJson(loadJsonFromAsset("Tornado_Watch.geojson"))));
-        loadedMapStyle.addSource(source);*/
+    private void addPolygonLayer(@NonNull Style loadedMapStyle, String layerId, String sourceId, MultiPolygon polygons, String color) {
+        GeoJsonSource source = loadedMapStyle.getSourceAs(sourceId);
+        if(source != null) {
+            loadedMapStyle.removeLayer(layerId);
+            loadedMapStyle.removeSource(sourceId);
+        }
+
+        loadedMapStyle.addSource(new GeoJsonSource(sourceId, polygons));
+        loadedMapStyle.addLayer(new FillLayer(layerId, sourceId).withProperties(
+                PropertyFactory.fillColor(Color.parseColor(color)),PropertyFactory.fillOpacity(.6f),PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
+        ));
+
     }
 
-    private void addPolygonLayer(@NonNull Style loadedMapStyle) {
-        FillLayer countryPolygonFillLayer = new FillLayer("polygon", GEOJSON_SOURCE_ID);
-        countryPolygonFillLayer.setProperties(
-                PropertyFactory.fillOpacity(.4f));
-        countryPolygonFillLayer.setFilter(eq(literal("$type"), literal("Polygon")));
-        loadedMapStyle.addLayer(countryPolygonFillLayer);
+    private void addPointLayer(@NonNull Style loadedMapStyle, String layerId, String sourceId, List<Feature> points, String color) {
+        GeoJsonSource source = loadedMapStyle.getSourceAs(sourceId);
+        if(source != null) {
+            loadedMapStyle.removeLayer(layerId);
+            loadedMapStyle.removeSource(sourceId);
+        }
+        loadedMapStyle.addSource(new GeoJsonSource(sourceId, FeatureCollection.fromFeatures(points)));
+        loadedMapStyle.addLayer(new CircleLayer(layerId, sourceId).withProperties(
+                PropertyFactory.circleColor(Color.parseColor(color)),
+                PropertyFactory.circleRadius(3f)
+                ));
+
     }
 
     private String loadJsonFromAsset(String filename) {
@@ -380,6 +421,110 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
         }
     };
+
+    private Emitter.Listener weatherUpdate = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject obj = (JSONObject) args[0];
+
+                    try{
+                        JSONArray weather = obj.getJSONArray("storms");
+
+                        JSONArray tornWarn = weather.getJSONArray(0);
+                        if(tornWarn.length() > 0) {
+                            tornadoWarnings = fillStorm(tornWarn);
+                            addPolygonLayer(map.getStyle(), "tornado_warnings_layer", "tornado_warnings_source", tornadoWarnings, "#cc0e0e");
+                        }
+
+                        JSONArray tornWatch = weather.getJSONArray(1);
+                        if(tornWatch.length() > 0) {
+                            tornadoWatches = fillStorm(tornWatch);
+                            addPolygonLayer(map.getStyle(), "tornado_watch_layer", "tornado_watch_source", tornadoWatches, "#f79533");
+                        }
+
+                        JSONArray tsWarn = weather.getJSONArray(2);
+                        if(tsWarn.length() > 0) {
+                            tsWarnings = fillStorm(tsWarn);
+                            addPolygonLayer(map.getStyle(), "thunderstorm_warning_layer", "thunderstorm_warning_source", tsWarnings, "#0c0f7a");
+                        }
+
+                        JSONArray tsWatch = weather.getJSONArray(3);
+                        if(tsWatch.length() > 0) {
+                            tsWatches = fillStorm(tsWatch);
+                            addPolygonLayer(map.getStyle(), "thunderstorm_watch_layer", "thunderstorm_warning_source", tsWatches, "#48ddea");
+                        }
+
+                        JSONArray wind = weather.getJSONArray(4);
+                        Log.d("WIND", wind.toString());
+                        if(wind.length() > 0) {
+                            windPoints = fillPointStorm(wind);
+                            addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#a7c5c6");
+                        }
+
+                        JSONArray tornado = weather.getJSONArray(5);
+                        if(tornado.length() > 0) {
+                            tornadoPoints = fillPointStorm(tornado);
+                            addPointLayer(map.getStyle(), "tornado_layer", "tornado_source", tornadoPoints, "#960606");
+                        }
+
+//                        JSONArray hail = weather.getJSONArray(6);
+//                        if(hail.length() > 0) {
+//                            fillHailStorm(hail);
+//                            if(!hailSmall.isEmpty()) {
+//                                addPointLayer(map.getStyle(), "", "", hailSmall);
+//                            }
+//                            if(!hailOneInch.isEmpty()) {
+//                                addPointLayer(map.getStyle(), "", "", hailOneInch);
+//                            }
+//                            if(!hailTwoInch.isEmpty()) {
+//                                addPointLayer(map.getStyle(), "", "", hailTwoInch);
+//                            }
+//                            if(!hailThreeInch.isEmpty()) {
+//                                addPointLayer(map.getStyle(), "", "", hailThreeInch);
+//                            }
+//                        }
+
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    };
+
+    private MultiPolygon fillStorm(JSONArray storm) throws JSONException {
+        ArrayList<Polygon> tempStorms = new ArrayList<Polygon>();
+
+        for(int i = 0; i < storm.length(); i++) {
+
+            List<List<Point>> points = new ArrayList<>();
+            List<Point> outerPoints = new ArrayList<>();
+
+            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates").getJSONArray(0);
+            for(int x = 0; x < coordinates.length(); x++){
+                JSONArray longlat = coordinates.getJSONArray(x);
+                outerPoints.add(Point.fromLngLat(longlat.getDouble(0), longlat.getDouble(1)));
+            }
+            points.add(outerPoints);
+            tempStorms.add(Polygon.fromLngLats(points));
+
+        }
+        return MultiPolygon.fromPolygons(tempStorms);
+    }
+
+    private List<Feature> fillPointStorm(JSONArray storm) throws JSONException {
+        List<Feature> tempFeat = new ArrayList<>();
+
+        for(int i = 0; i < storm.length(); i++) {
+            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates");
+            tempFeat.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+        }
+        return tempFeat;
+    }
 
     private Emitter.Listener destinationReached = new Emitter.Listener() {
         @Override
