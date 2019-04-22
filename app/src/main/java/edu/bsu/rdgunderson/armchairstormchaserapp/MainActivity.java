@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View loginScreen;
     private View inputConfirmationScreen;
     private View endOfDayScreen;
+    private View howToPlayScreen;
 
 //    private boolean isMarkers = false;
 //    private boolean isWeather = false;
@@ -200,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
                 //If the player is traveling don't select a new route before stopping the other
-                if (!endTravelEnabledDisable) {
+                if (!endTravelEnabledDisable && inFocus) {
                     //If the player isn't selecting a starting location
                     if (!isSelectingStartingLocation) {
                         hasSetRoute = true;
@@ -718,6 +719,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void logout(View view) {
 //        socket.emit("logoff");
         switchToLoginScreen(view);
+    }
+
+    public void switchToHowToPlayScreen(View view) {
+        inFocus = false;
+        LayoutInflater inflater = getLayoutInflater();
+        howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
+        getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+
+    public void removeHowToPlayScreen(View view){
+        inFocus = false;
+        ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
 
     public void switchToLoginScreen(View view) {

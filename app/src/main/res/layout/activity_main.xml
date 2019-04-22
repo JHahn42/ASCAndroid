@@ -24,6 +24,16 @@
 
     </com.mapbox.mapboxsdk.maps.MapView>
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="19dp"
+        android:onClick="switchToHowToPlayScreen"
+        android:text="@string/howToPlayButtonLabel"
+        app:layout_constraintStart_toStartOf="@+id/mapView"
+        app:layout_constraintTop_toBottomOf="@+id/buttonLogout" />
+
     <TextView
         android:id="@+id/textView_Score"
         android:layout_width="wrap_content"
