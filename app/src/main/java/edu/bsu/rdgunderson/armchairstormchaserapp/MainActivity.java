@@ -13,9 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -62,12 +59,8 @@ import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 import com.mapbox.mapboxsdk.style.layers.SymbolLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import static com.mapbox.core.constants.Constants.PRECISION_6;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.eq;
-import static com.mapbox.mapboxsdk.style.expressions.Expression.literal;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
@@ -152,6 +145,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 map = mapboxMap;
 
+                addLoginScreen();
+
                 startGame();
             }
 
@@ -205,17 +200,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         getRoute(style, origin, destination);
                         updateMarkerPosition();
                     } else {
-                        //If selecting a startibg location get coordinates of point clicked and set as current
-                        currentLatitude = point.getLatitude();
-                        currentLongitude = point.getLongitude();
-                        //Place marker where current lcoation is selected
-                        placeStartingLocationMarker();
-                        //Change instruction text to reflect change
-                        changeStartingLocationText();
-                        //Emit to server where the player now is
+                        if (loggedIn) {
+                            //If selecting a starting location get coordinates of point clicked and set as current
+                            currentLatitude = point.getLatitude();
+                            currentLongitude = point.getLongitude();
+                            //Place marker where current lcoation is selected
+                            placeStartingLocationMarker();
+                            //Change instruction text to reflect change
+                            changeStartingLocationText();
+                            //Emit to server where the player now is
 //                        socket.emit("selectStartingLocation", currentLatitude, currentLongitude);
-                        //Mark player as not selecting a starting location
-                        isSelectingStartingLocation = false;
+                            //Mark player as not selecting a starting location
+                            isSelectingStartingLocation = false;
+                        }
                     }
                 }
                 return false;
@@ -651,6 +648,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 loggedIn = true;
             }*/
             //If the player exists get player information and remove login screen
+            loggedIn = true;
+            switchToMainScreen(view);
         }
     }
 
@@ -665,6 +664,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }*/
 
     public void switchToLoginScreen(View view) {
+        addLoginScreen();
+    }
+
+    private void addLoginScreen(){
         LayoutInflater inflater = getLayoutInflater();
         loginScreen = inflater.inflate(R.layout.login, null);
         getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
