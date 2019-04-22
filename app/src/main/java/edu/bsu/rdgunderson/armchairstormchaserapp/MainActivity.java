@@ -643,11 +643,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void stopTravel(View view) {
-        //When the stop travel button ic clicked, display in put confirmation screen
-        LayoutInflater inflater = getLayoutInflater();
-        inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
-        getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        //If in focus (No Other screens on top)
+        if (inFocus) {
+            //When the stop travel button ic clicked, display in put confirmation screen
+            LayoutInflater inflater = getLayoutInflater();
+            inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
+            getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
     }
 
     private void toggleStopTravelButton(boolean enableDisable) {
@@ -719,23 +722,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void switchToHowToPlayScreen(View view) {
-        inFocus = false;
-        LayoutInflater inflater = getLayoutInflater();
-        howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
-        getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        if (inFocus) {
+            inFocus = false;
+            LayoutInflater inflater = getLayoutInflater();
+            howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
+            getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
     }
 
     public void removeHowToPlayScreen(View view){
-        inFocus = false;
+        inFocus = true;
         ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
 
     public void switchToLoginScreen(View view) {
-        addLoginScreen();
+        if (inFocus) {
+            addLoginScreen();
+        }
     }
 
     private void addLoginScreen(){
+        inFocus = false;
         LayoutInflater inflater = getLayoutInflater();
         loginScreen = inflater.inflate(R.layout.login, null);
         getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -743,6 +751,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void switchToMainScreen(View view) {
+        inFocus = true;
         ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
     }
 
