@@ -11,6 +11,8 @@
     <string name="goBackButtonLabel">Go Back</string>
     <string name="createUserButtonLabel">Create User</string>
     <string name="button_StopTravel">Stop Travel</string>
+    <string name="beginNewDayStartNewButton">Select New Start</string>
+    <string name="beginNewDayContinueButton">Continue</string>
     <string name="beginNewDayButton">Begin New Day</string>
     <string name="howToPlayReturnButtonLabel">Return to Game</string>
     <string name="howToPlayButtonLabel">How to Play</string>
