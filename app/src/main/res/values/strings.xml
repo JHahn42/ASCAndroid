@@ -11,7 +11,8 @@
     <string name="goBackButtonLabel">Go Back</string>
     <string name="createUserButtonLabel">Create User</string>
     <string name="button_StopTravel">Stop Travel</string>
-    <string name="beginNewDayButton">Begin New Day</string>
+    <string name="beginNewDayStartNewButton">Begin from new Location</string>
+    <string name="beginNewDayContinueButton">Begin from same Location</string>
     <string name="endOfDayLabel">End of Day</string>
     <string name="usernameHint">username</string>
     <string name="passwordHint">passsword</string>

@@ -13,9 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -64,8 +61,6 @@ import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import static com.mapbox.core.constants.Constants.PRECISION_6;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconAllowOverlap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconIgnorePlacement;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconImage;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconOffset;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
@@ -74,8 +69,6 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private MapboxMap map;
-    /*private double currentLatitude = 40.193378;
-    private double currentLongitude = -85.386360;*/
     private MapView mapView;
     private double currentLatitude;
     private double currentLongitude;
@@ -142,12 +135,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.connect();
 
         Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
-        /*while (!loggedIn) {
-            setContentView(R.layout.loginScreen);
-            //When button is clicked on loginScreen screen, check if player entered exists
-            //If player exists setLoggedIn = true
-        }*/
-
         setContentView(R.layout.activity_main);
         mapView = findViewById(R.id.mapView);
         mapView.onCreate(savedInstanceState);
@@ -559,16 +546,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    private void sendNotificationToPhone() {
-        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notify=new Notification.Builder
-                (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
-                setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
-        notify.flags |= Notification.FLAG_AUTO_CANCEL;
-        assert notificationManager != null;
-        notificationManager.notify(0, notify);
-    }
-
     //All End Of Day Screen methods
     private Emitter.Listener endOfDay = new Emitter.Listener() {
         @Override
@@ -597,8 +574,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         totalScoreText.setText(Integer.toString(totalScore));
     }
 
-    public void beginNewDay(View view) {
+    public void beginNewDayNewStart(View view) {
+        //Set to selecting starting location
+        isSelectingStartingLocation = true;
+        //Remove Marker from Screen
+        //Reset Score Multiplier; Emit to Server
         //Remove end of day screen if the beginning of day has begun
+        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+    }
+
+    public void beginNewDaySameStart(View view) {
+        //Remove end of day screen if the beginning of day has begun
+        //Change Score Multiplier; Emit to Server
         ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
     }
 
@@ -642,6 +629,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ));
             }
         }
+    }
+
+    private void sendNotificationToPhone() {
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notify=new Notification.Builder
+                (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
+                setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
+        notify.flags |= Notification.FLAG_AUTO_CANCEL;
+        assert notificationManager != null;
+        notificationManager.notify(0, notify);
     }
 
     public void stopTravel(View view) {
