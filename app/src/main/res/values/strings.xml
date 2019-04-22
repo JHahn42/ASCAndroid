@@ -28,4 +28,10 @@
     <string name="areYouSureLabel">Are you sure?</string>
     <string name="yesButton">Yes</string>
     <string name="noButton">No</string>
+    <string name="HowToPlay_SelectRoute">To select a route simply press any location on the map to start moving there.</string>
+    <string name="HowToPlay_SelectStart">To start, simply press any location on the map where you wish to begin.</string>
+    <string name="HowToPlay_StormValues">[Information about Storm Values and colors]</string>
+    <string name="HowToPlay_Score">The score for the current day is displayed on the upper right corner of the screen.</string>
+    <string name="HowToPlay_TimeLeft">The time remaining for the current route is displayed on the upper right side of the screen.</string>
+    <string name="HowToPlay_StopTravel">To choose a new route, you need to click the stop travel button.</string>
 </resources>
