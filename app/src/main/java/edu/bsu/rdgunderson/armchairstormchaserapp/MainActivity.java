@@ -45,14 +45,12 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.FeatureCollection;
 import com.mapbox.geojson.LineString;
 import com.mapbox.geojson.Point;
-import com.mapbox.geojson.Polygon;
 import com.mapbox.mapboxsdk.Mapbox;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
-import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.LineLayer;
 import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
@@ -76,12 +74,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private double currentLongitude;
     private double destinationLatitude;
     private double destinationLongitude;
-    private static final String GEOJSON_SOURCE_ID = "GEOJSONFILE";
     private static final String ROUTE_LAYER_ID = "route-layer-id";
     private static final String ROUTE_SOURCE_ID = "route-source-id";
-    private static final String ICON_LAYER_ID = "icon-layer-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
-    private static final String RED_PIN_ICON_ID = "red-pin-icon-id";
     private DirectionsRoute currentRoute;
     private Point origin;
     private Point destination;
@@ -127,9 +122,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
             @Override
             public void onStyleLoaded(@NonNull Style style) {
-                //createGeoJsonSource(style);
-                //addPolygonLayer(style);
-
                 ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
 
                 socket = app.getSocket();
@@ -200,6 +192,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         getRoute(style, origin, destination);
                         updateMarkerPosition();
                     } else {
+                        //If the user has logged in
                         if (loggedIn) {
                             //If selecting a starting location get coordinates of point clicked and set as current
                             currentLatitude = point.getLatitude();
@@ -219,80 +212,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
     }
-
-    private void updateWeatherPolygons() {
-        Style style = map.getStyle();
-        List<List<Point>> POINTS = new ArrayList<>();
-        POINTS = createPolygon(POINTS);
-//        addIndividualPolygonToMap(style, POINTS);
-//        createGeoJsonSource(style);
-//        addPolygonLayer(style);
-    }
-
-    private List<List<Point>> createPolygon(List<List<Point>> POINTS) {
-        List<Point> OUTER_POINTS = new ArrayList<>();
-        double polygonLatitude;
-        double polygonLongitude;
-
-        //Iterate over every polygon and add coordinates to OUTER_POINTS
-        try {
-            for (int index = 0; index < weatherPolygons.length(); index++) {
-                System.out.println("Weather: " + weatherPolygons.getJSONObject(index).getString("instances"));
-            }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-//        OUTER_POINTS.add(Point.fromLngLat(polygonLongitude, polygonLatitude));
-        //Then add OUTER_POINTS to POINTS
-        //Clear OUTER_POINTS
-        //Repeat for all polygons
-
-
-        /*OUTER_POINTS.add(Point.fromLngLat(-122.685699, 45.522585));
-        OUTER_POINTS.add(Point.fromLngLat(-122.708873, 45.534611));
-        OUTER_POINTS.add(Point.fromLngLat(-122.678833, 45.530883));
-        OUTER_POINTS.add(Point.fromLngLat(-122.667503, 45.547115));
-        OUTER_POINTS.add(Point.fromLngLat(-122.660121, 45.530643));
-        OUTER_POINTS.add(Point.fromLngLat(-122.636260, 45.533529));
-        OUTER_POINTS.add(Point.fromLngLat(-122.659091, 45.521743));
-        OUTER_POINTS.add(Point.fromLngLat(-122.648792, 45.510677));
-        OUTER_POINTS.add(Point.fromLngLat(-122.664070, 45.515008));
-        OUTER_POINTS.add(Point.fromLngLat(-122.669048, 45.502496));
-        OUTER_POINTS.add(Point.fromLngLat(-122.678489, 45.515369));
-        OUTER_POINTS.add(Point.fromLngLat(-122.702007, 45.506346));
-        OUTER_POINTS.add(Point.fromLngLat(-122.685699, 45.522585));*/
-        POINTS.add(OUTER_POINTS);
-        return POINTS;
-    }
-
-    private void addIndividualPolygonToMap(Style style, List<List<Point>> POINTS) {
-        if (style.getSource("source-id") != null ) {
-            style.removeSource("source-id");
-        }
-        style.addSource(new GeoJsonSource("source-id", Polygon.fromLngLats(POINTS)));
-        style.addLayer(new FillLayer("layer-id", "source-id").withProperties(
-                fillColor(Color.parseColor("#3bb2d0"))));
-    }
-
-    /*private void createGeoJsonSource(@NonNull Style style) {
-//        Object geoJSON = makeGeoJSON(weatherPolygons);
-//        style.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID, geoJSON));
-//        loadedMapStyle.addSource(new GeoJsonSource(GEOJSON_SOURCE_ID, loadJsonFromAsset("Tornado_Watch.geojson")));
-        *//*CustomGeometrySource source = new CustomGeometrySource("geojson-source", (FeatureCollection.fromJson(loadJsonFromAsset("Tornado_Watch.geojson"))));
-        loadedMapStyle.addSource(source);*//*
-    }*/
-
-
-
-    /*private void addPolygonLayer(@NonNull Style loadedMapStyle) {
-        FillLayer countryPolygonFillLayer = new FillLayer("polygon", GEOJSON_SOURCE_ID);
-        countryPolygonFillLayer.setProperties(
-                PropertyFactory.fillOpacity(.4f));
-        countryPolygonFillLayer.setFilter(eq(literal("$type"), literal("Polygon")));
-        loadedMapStyle.addLayer(countryPolygonFillLayer);
-    }*/
-
 
     private void placeStartingLocationMarker() {
         Style style = map.getStyle();
@@ -342,20 +261,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 lineCap(Property.LINE_CAP_ROUND),
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineWidth(5f),
-                lineColor(Color.parseColor("#6699ff"))
+                lineColor(Color.parseColor(Constants.ROUTE_LINE_COLOR))
         );
 
         if (loadedMapStyle.getLayer(ROUTE_LAYER_ID) == null) {
             loadedMapStyle.addLayer(routeLayer);
         }
-
-        /*if (loadedMapStyle.getLayer(ICON_LAYER_ID) == null) {
-            loadedMapStyle.addLayer(new SymbolLayer(ICON_LAYER_ID, ICON_SOURCE_ID).withProperties(
-                    iconImage(RED_PIN_ICON_ID),
-                    iconIgnorePlacement(true),
-                    iconIgnorePlacement(true),
-                    iconOffset(new Float[]{0f, -4f})));
-        }*/
     }
 
     private void getRoute(@NonNull final Style style, Point origin, Point destination) {
@@ -411,23 +322,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         style.removeLayer(ROUTE_LAYER_ID);
     }
 
-
-
-    /*private String loadJsonFromAsset(String filename) {
-        try {
-            InputStream is = getAssets().open(filename);
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            return new String(buffer, StandardCharsets.UTF_8);
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return null;
-        }
-    }*/
-
     /*
         Event fires when server emits the updatePlayer event
         server emits in response to an emit from App side of
@@ -471,7 +365,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     try{
                         storms = data.getJSONArray("storms");
                         weatherPolygons = storms;
-//                        updateWeatherPolygons();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -657,11 +550,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //        socket.emit("logoff");
         switchToLoginScreen(view);
     }
-
-    /*private boolean userExists(String usernameTextInput, String passwordTextInput) {
-        //Replace with checking "Database/Data"
-        return true;
-    }*/
 
     public void switchToLoginScreen(View view) {
         addLoginScreen();
