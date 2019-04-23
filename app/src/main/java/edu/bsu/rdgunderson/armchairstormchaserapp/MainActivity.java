@@ -591,7 +591,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     int totalScore = 0;
                     isEndOfDay = true;
                     //Set values for end of day screen
-                    setScoreOnEndOfDayScreen(dailyScore, totalScore);
+                    //setScoreOnEndOfDayScreen(dailyScore, totalScore);
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
                 }
@@ -614,11 +614,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
-        TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
-        TextView totalScoreText = findViewById(R.id.totalScore_textView);
+        //TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
+        //TextView totalScoreText = findViewById(R.id.totalScore_textView);
         //Set text for daily score and total score on end of day screen to score received from server
-        dailyScoreText.setText(Integer.toString(dailyScore));
-        totalScoreText.setText(Integer.toString(totalScore));
+        //dailyScoreText.setText(Integer.toString(dailyScore));
+        //totalScoreText.setText(Integer.toString(totalScore));
     }
 
     public void beginNewDayNewStart(View view) {
