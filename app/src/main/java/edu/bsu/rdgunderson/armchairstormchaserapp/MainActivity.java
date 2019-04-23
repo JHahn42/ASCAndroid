@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         );
 
         if (loadedMapStyle.getLayer(ROUTE_LAYER_ID) == null) {
-            loadedMapStyle.addLayer(routeLayer);
+            loadedMapStyle.addLayerBelow(routeLayer, "originMarker-layer-id");
         }
     }
 
