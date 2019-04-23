@@ -623,17 +623,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void beginNewDayNewStart(View view) {
         //Set to selecting starting location
-        isSelectingStartingLocation = true;
+//        isSelectingStartingLocation = true;
         //Remove Marker from Screen
         //Reset Score Multiplier; Emit to Server
         //Remove end of day screen if the beginning of day has begun
-        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        if (endOfDayScreen != null) {
+            ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        }
     }
 
     public void beginNewDaySameStart(View view) {
         //Remove end of day screen if the beginning of day has begun
         //Change Score Multiplier; Emit to Server
-        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        if (endOfDayScreen != null) {
+            ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        }
     }
 
     public void switchToEndOfDayScreen() {
