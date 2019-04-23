@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         socket = app.getSocket();
         // socket.on(Socket.EVENT_CONNECT, onConnect);
-        // socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
+        socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
         // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
         socket.on("updatePlayer", onUpdatePlayer);
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when gameLoopTimer task runs if the player has selected a route and is not selecting a starting location
-                                if (inFocus && !isSelectingStartingLocation) {
+                                if (inFocus && !isSelectingStartingLocation && loggedIn) {
                                     socket.emit("getPlayerUpdate");
                                     updateMarkerPosition();
                                 }
@@ -384,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         loadedMapStyle.addSource(new GeoJsonSource(sourceId, polygons));
         loadedMapStyle.addLayer(new FillLayer(layerId, sourceId).withProperties(
-                PropertyFactory.fillColor(Color.parseColor(color)),PropertyFactory.fillOpacity(.6f),PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
+                PropertyFactory.fillColor(Color.parseColor(color)),PropertyFactory.fillOpacity(.7f),PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
         ));
 
     }
@@ -599,6 +599,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private Emitter.Listener onDisconnect = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    loggedIn = false;
+                    logout(loginScreen);
+                }
+            });
+        }
+    };
+
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
         TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
@@ -750,10 +763,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             String usernameTextInput = usernameTextBox.getText().toString();
             String passwordTextInput = passwordTextBox.getText().toString();
             //Check if player exists
-            /*if (userExists(usernameTextInput, passwordTextInput)) {
-                socket.emit("login", usernameTextInput, Point.fromLngLat(currentLongitude, currentLatitude), 0, 0, 0);
-                loggedIn = true;
-            }*/
+//            if (userExists(usernameTextInput, passwordTextInput)) {
+//
+//                socket.emit("login", usernameTextInput, passwordTextInput, currentLongitude, currentLatitude, 0, 0, 0);
+//                loggedIn = true;
+//            }
+            // create new user if player does not exist
+//            else {
+//
+//            }
             //If the player exists get player information and remove login screen
             loggedIn = true;
             switchToMainScreen(view);
