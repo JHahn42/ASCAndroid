@@ -65,6 +65,7 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
+import static java.lang.Math.round;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -416,31 +417,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         JSONArray tornWarn = weather.getJSONArray(0);
                         if(tornWarn.length() > 0) {
                             tornadoWarnings = fillStorm(tornWarn);
-                            addPolygonLayer(map.getStyle(), "tornado_warnings_layer", "tornado_warnings_source", tornadoWarnings, "#cc0e0e");
+                            addPolygonLayer(map.getStyle(), "tornado_warnings_layer", "tornado_warnings_source", tornadoWarnings, "#ff0000");
                         }
 
                         JSONArray tornWatch = weather.getJSONArray(1);
                         if(tornWatch.length() > 0) {
                             tornadoWatches = fillStorm(tornWatch);
-                            addPolygonLayer(map.getStyle(), "tornado_watch_layer", "tornado_watch_source", tornadoWatches, "#f79533");
+                            addPolygonLayer(map.getStyle(), "tornado_watch_layer", "tornado_watch_source", tornadoWatches, "#f8ff29");
                         }
 
                         JSONArray tsWarn = weather.getJSONArray(2);
                         if(tsWarn.length() > 0) {
                             tsWarnings = fillStorm(tsWarn);
-                            addPolygonLayer(map.getStyle(), "thunderstorm_warning_layer", "thunderstorm_warning_source", tsWarnings, "#0c0f7a");
+                            addPolygonLayer(map.getStyle(), "thunderstorm_warning_layer", "thunderstorm_warning_source", tsWarnings, "#0eaa0e");
                         }
 
                         JSONArray tsWatch = weather.getJSONArray(3);
                         if(tsWatch.length() > 0) {
                             tsWatches = fillStorm(tsWatch);
-                            addPolygonLayer(map.getStyle(), "thunderstorm_watch_layer", "thunderstorm_warning_source", tsWatches, "#48ddea");
+                            addPolygonLayer(map.getStyle(), "thunderstorm_watch_layer", "thunderstorm_watch_source", tsWatches, "#33f1ff");
                         }
 
                         JSONArray wind = weather.getJSONArray(4);
                         if(wind.length() > 0) {
                             windPoints = fillPointStorm(wind);
-                            addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#199606");
+                            addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#64fe10");
                         }
 
                         JSONArray tornado = weather.getJSONArray(5);
@@ -453,16 +454,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if(hail.length() > 0) {
                             fillHailStorm(hail);
                             if(!hailSmall.isEmpty()) {
-                                addPointLayer(map.getStyle(), "hail_small_layer", "hail_small_source", hailSmall, "#b0a5ff");
+                                addPointLayer(map.getStyle(), "hail_small_layer", "hail_small_source", hailSmall, "#80ffdf");
                             }
                             if(!hailOneInch.isEmpty()) {
-                                addPointLayer(map.getStyle(), "hail_one_layer", "hail_one_source", hailOneInch, "#8173ef");
+                                addPointLayer(map.getStyle(), "hail_one_layer", "hail_one_source", hailOneInch, "#80bfff");
                             }
                             if(!hailTwoInch.isEmpty()) {
-                                addPointLayer(map.getStyle(), "hail_two_layer", "hail_two_source", hailTwoInch, "#5545d1");
+                                addPointLayer(map.getStyle(), "hail_two_layer", "hail_two_source", hailTwoInch, "#0075eb");
                             }
                             if(!hailThreeInch.isEmpty()) {
-                                addPointLayer(map.getStyle(), "hail_three_layer", "hail_three_source", hailThreeInch, "#140587");
+                                addPointLayer(map.getStyle(), "hail_three_layer", "hail_three_source", hailThreeInch, "#1400eb");
                             }
                         }
 
@@ -603,7 +604,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Get time left textView from Ui
         TextView timeText = findViewById(R.id.textView_Time);
         //Set text from time left to time left updated from server
-        timeText.setText(Integer.toString((int) floor(timeLeft)) + " Seconds");
+        int timesec = (int)Math.round(timeLeft);
+
+        int hours = timesec / 3600;
+        int minutes = (timesec % 3600) / 60;
+        int seconds = (timesec % 3600) % 60;
+
+        String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
+
+        timeText.setText(countDown);
+        timeText.setBackgroundColor(0xffffffff);
     }
 
     private void updateScore(int score) {
@@ -611,6 +621,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView scoreText = findViewById(R.id.textView_Score);
         //Set text for score to score updated from server
         scoreText.setText(Integer.toString(score));
+        scoreText.setBackgroundColor(0xffffffff);
     }
 
     public void updateLocation(Point currentLocationFromServer) {
