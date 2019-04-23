@@ -19,6 +19,7 @@ import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
 import static java.lang.Math.floor;
 
 import android.app.Notification;
@@ -82,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point destination;
     private SymbolLayer originMarkerSymbolLayer = null;
     private GeoJsonSource originMarkerGeoJsonSource = null;
+    private SymbolLayer destinationMarkerSymbolLayer = null;
+    private GeoJsonSource destinationMarkerGeoJsonSource = null;
     final Handler handler = new Handler();
     Timer gameLoopTimer;
     TimerTask mainGameLoop;
@@ -204,6 +207,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         initLayers(style);
                         //Find route and mark it on map
                         getRoute(style, origin, destination);
+                        setDestinationMarker(destinationLongitude, destinationLatitude);
                         updateMarkerPosition();
                     } else {
                         //If the user has logged in
@@ -231,6 +235,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return false;
             }
         });
+    }
+
+    private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
+        Style style = map.getStyle();
+
+        if (destinationMarkerSymbolLayer != null) {
+            removeDestinationMarker();
+        }
+
+        style.addImage("destination-marker-icon-id",
+                BitmapFactory.decodeResource(
+                        MainActivity.this.getResources(), R.drawable.asc_destination_marker));
+        destinationMarkerGeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
+                Point.fromLngLat(destinationLongitude, destinationLatitude)));
+        style.addSource(destinationMarkerGeoJsonSource);
+
+        destinationMarkerSymbolLayer = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
+        destinationMarkerSymbolLayer.withProperties(
+                PropertyFactory.iconImage("destination-marker-icon-id")
+        );
+        style.addLayer(destinationMarkerSymbolLayer.withProperties(
+                iconAllowOverlap(false),
+                iconIgnorePlacement(true)
+        ));
+    }
+
+    private void removeDestinationMarker() {
+        Style style = map.getStyle();
+        style.removeLayer("destinationMarker-layer-id");
+        style.removeSource("destination-source-id");
     }
 
     private void placeStartingLocationMarker() {
@@ -273,9 +307,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void initLayers(@NonNull Style loadedMapStyle) {
-        LineLayer routeLayer = new LineLayer(ROUTE_LAYER_ID, ROUTE_SOURCE_ID).withProperties(
-                iconAllowOverlap(true)
-        );
+        LineLayer routeLayer = new LineLayer(ROUTE_LAYER_ID, ROUTE_SOURCE_ID);
 
         routeLayer.setProperties(
                 lineCap(Property.LINE_CAP_ROUND),
@@ -689,6 +721,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Mark that the player doesn't have a set route now
         hasSetRoute = false;
         //Remove input confirmation screen
+        removeDestinationMarker();
         removeInputConfirmationScreen();
     }
 
