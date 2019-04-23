@@ -9,13 +9,16 @@
         android:id="@+id/confirmation_textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="261dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="40dp"
         android:text="@string/areYouSureLabel"
         android:textSize="30sp"
         android:textStyle="bold"
+        app:layout_constraintBottom_toTopOf="@+id/noButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
 
     <Button
         android:id="@+id/yesButton"
@@ -35,7 +38,7 @@
         style="@style/Widget.AppCompat.Button.Small"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="47dp"
+        android:layout_marginEnd="46dp"
         android:onClick="stopTravelButtonNo"
         android:text="@string/noButton"
         app:layout_constraintBaseline_toBaselineOf="@+id/yesButton"
