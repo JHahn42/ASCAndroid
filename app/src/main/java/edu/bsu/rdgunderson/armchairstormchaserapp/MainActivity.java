@@ -91,10 +91,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View endOfDayScreen;
     private View howToPlayScreen;
 
-    private boolean hasSetRoute = false;
-    private boolean loggedIn = false;
+//    private boolean loggedIn = false;
     private boolean inFocus = true;
-    private boolean endTravelEnabledDisable = false;
+//    private boolean endTravelEnabledDisable = false;
+    private boolean isTraveling = false;
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
 
@@ -152,8 +152,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onStyleLoaded(@NonNull Style style) {
                 map = mapboxMap;
                 socket.emit("getWeatherUpdate");
-                //String key = getKeyFromFile();
-                //socket.emit("login", Username, key, currentLongitude, currentLatitude, dailyScore, totalScore, scoreMultiplier);
                 addLoginScreen();
                 startGame();
             }
@@ -170,14 +168,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when gameLoopTimer task runs if the player has selected a route and is not selecting a starting location
-                                if (inFocus && !isSelectingStartingLocation && loggedIn && hasSetRoute) {
+                                if (inFocus && isTraveling) {
                                     socket.emit("getPlayerUpdate");
                                 }
                                 //Enable or Disable End of Day buttons based on Time
                                 //toggleEndOfDayButtons();
                                 //If the player has a set route toggle buttons and labels accordingly
-//                                endTravelEnabledDisable = hasSetRoute;
-                                toggleStopTravelButton(endTravelEnabledDisable);
+                                toggleStopTravelButton(isTraveling);
                             }
                         });
                     }
@@ -188,17 +185,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
-                //if ()
-                //If the player is traveling don't select a new route before stopping the other and map is in focus
-                /*System.out.println("endTravelEnabledDisable: " + endTravelEnabledDisable);
-                System.out.println("inFocus: " + inFocus);
+                    //If the player is traveling don't select a new route before stopping the other and map is in focus
+                /*System.out.println("inFocus: " + inFocus);
                 System.out.println("isSelectingStartingLocation: " + isSelectingStartingLocation);
                 System.out.println("hasSetRoute: " + hasSetRoute);
-                System.out.println("loggedIn: " + loggedIn);*/
-                if (!endTravelEnabledDisable && inFocus) {
+                System.out.println("isTraveling: " + isTraveling);*/
+                if (inFocus && !isTraveling) {
                     //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
-                        hasSetRoute = true;
+                        isTraveling = true;
                         //Get coordinates of location clicked
                         destinationLatitude = point.getLatitude();
                         destinationLongitude = point.getLongitude();
@@ -213,29 +208,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         getRoute(origin, destination);
                         setDestinationMarker(destinationLongitude, destinationLatitude);
                         updateMarkerPosition();
+                        toggleStopTravelButton(true);
                     } else {
-                        //If the user has logged in
-                        if (loggedIn) {
-                            //If selecting a starting location get coordinates of point clicked and set as current
-                            currentLatitude = point.getLatitude();
-                            currentLongitude = point.getLongitude();
-                            System.out.println(currentLatitude);
-                            System.out.println(currentLongitude);
-                            //Place marker where current lcoation is selected
-                            placeStartingLocationMarker();
-                            //Change instruction text to reflect change
-                            changeStartingLocationText();
-                            //Emit to server where the player now is
-                            if(continueFromLastLoc) {
-                                scoreMultiplier = 1.2;
-                            }
-                            else {
-                                scoreMultiplier = 1;
-                            }
-                            socket.emit("startLocationSelect", currentLatitude, currentLongitude, scoreMultiplier);
-                            //Mark player as not selecting a starting location
-                            isSelectingStartingLocation = false;
+                        //If selecting a starting location get coordinates of point clicked and set as current
+                        currentLatitude = point.getLatitude();
+                        currentLongitude = point.getLongitude();
+                        //Place marker where current lcoation is selected
+                        placeStartingLocationMarker();
+                        //Change instruction text to reflect change
+                        changeStartingLocationText();
+                        //Emit to server where the player now is
+                        if(continueFromLastLoc) {
+                            scoreMultiplier = 1.2;
                         }
+                        else {
+                            scoreMultiplier = 1;
+                        }
+                        socket.emit("startLocationSelect", currentLatitude, currentLongitude, scoreMultiplier);
+                        //Mark player as not selecting a starting location
+                        isSelectingStartingLocation = false;
                     }
                 }
                 return false;
@@ -570,7 +561,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 public void run() {
                     if (inFocus) {
                         removeRoute();
-                        hasSetRoute = false;
+                        isTraveling = false;
                     } else {
                         sendNotificationToPhone();
                     }
@@ -592,14 +583,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLongitude = data.getDouble("longitude");
                         currentLatitude = data.getDouble("latitude");
                         routeFromServer = data.getString("routeGeometry");
-                        endTravelEnabledDisable = data.getBoolean("isTraveling");
-                        isSelectingStartingLocation = !data.getBoolean("isTraveling");
-                        loggedIn = true;
+                        isTraveling = data.getBoolean("isTraveling");
+                        //
+//                        endTravelEnabledDisable = data.getBoolean("isTraveling");
+                        isSelectingStartingLocation = data.getBoolean("isTraveling");
+                        //
+//                        loggedIn = true;
+                        removeOriginMarker();
                         placeStartingLocationMarker();
                         //Pass routeFromServer to draw line
                         System.out.println("Route from Server: " + routeFromServer);
                         if (routeFromServer != "null" || routeFromServer != null) {
-                            hasSetRoute = true;
 //                            addRouteToStyle(routeFromServer);
                         }
 //                        setDestinationMarker();
@@ -620,7 +614,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     isSelectingStartingLocation = true;
-                    loggedIn = true;
+//                    loggedIn = true;
                     removeLoginScreen();
                 }
             });
@@ -759,9 +753,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void resetBooleans() {
         inFocus = false;
-        hasSetRoute = false;
-        loggedIn = false;
-        endTravelEnabledDisable = false;
+        isTraveling = false;
+        isEndOfDay = false;
+//        isSelectingStartingLocation = true;
     }
 
     /////////////////////////////////////////////////////////
@@ -879,7 +873,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Set time left to 0
         updateTimeLeft(0);
         //Mark that the player doesn't have a set route now
-        hasSetRoute = false;
+        isTraveling = false;
         //Remove input confirmation screen
         removeDestinationMarker();
         removeInputConfirmationScreen();
