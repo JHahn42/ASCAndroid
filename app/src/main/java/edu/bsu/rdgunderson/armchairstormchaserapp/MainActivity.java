@@ -264,12 +264,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ));
     }
 
-    private void removeDestinationMarker() {
-        Style style = map.getStyle();
-        style.removeLayer("destinationMarker-layer-id");
-        style.removeSource("destination-source-id");
-    }
-
     private void placeStartingLocationMarker() {
         Style style = map.getStyle();
         style.addImage("origin-marker-icon-id",
@@ -286,6 +280,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 iconAllowOverlap(false),
                 iconIgnorePlacement(true)
         ));
+    }
+
+    private void removeDestinationMarker() {
+        Style style = map.getStyle();
+        style.removeLayer("destinationMarker-layer-id");
+        style.removeSource("destination-source-id");
+    }
+
+    private void removeOriginMarker() {
+        Style style = map.getStyle();
+        style.removeLayer("originMarker-layer-id");
+        style.removeSource("origin-source-id");
     }
 
     private void changeStartingLocationText() {
@@ -736,6 +742,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         notificationManager.notify(0, notify);
     }
 
+    private void removeNonWeatherFromStyle() {
+        removeOriginMarker();
+        removeDestinationMarker();
+        removeRoute();
+    }
+
+    private void resetBooleans() {
+        inFocus = false;
+        hasSetRoute = false;
+        loggedIn = false;
+        endTravelEnabledDisable = false;
+    }
+
     /////////////////////////////////////////////////////////
 
     //Login
@@ -799,7 +818,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.emit("logoff");
         switchToLoginScreen(view);
         //Remove everything from style
+        removeNonWeatherFromStyle();
         //Reset Selection (Basically entire app selection booleans)
+        resetBooleans();
     }
 
     //////////////////////////////////////////////////
