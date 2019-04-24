@@ -170,15 +170,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when gameLoopTimer task runs if the player has selected a route and is not selecting a starting location
-                                //isSelectingStartingLocation = !loggedIn;
-                                if (inFocus && !isSelectingStartingLocation && loggedIn) {
+                                if (inFocus && !isSelectingStartingLocation && loggedIn && hasSetRoute) {
                                     socket.emit("getPlayerUpdate");
-                                    //updateMarkerPosition();
                                 }
                                 //Enable or Disable End of Day buttons based on Time
                                 //toggleEndOfDayButtons();
                                 //If the player has a set route toggle buttons and labels accordingly
-                                endTravelEnabledDisable = hasSetRoute;
+//                                endTravelEnabledDisable = hasSetRoute;
                                 toggleStopTravelButton(endTravelEnabledDisable);
                             }
                         });
@@ -192,6 +190,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public boolean onMapClick(@NonNull LatLng point) {
                 //if ()
                 //If the player is traveling don't select a new route before stopping the other and map is in focus
+                /*System.out.println("endTravelEnabledDisable: " + endTravelEnabledDisable);
+                System.out.println("inFocus: " + inFocus);
+                System.out.println("isSelectingStartingLocation: " + isSelectingStartingLocation);
+                System.out.println("hasSetRoute: " + hasSetRoute);
+                System.out.println("loggedIn: " + loggedIn);*/
                 if (!endTravelEnabledDisable && inFocus) {
                     //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
@@ -589,13 +592,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLongitude = data.getDouble("longitude");
                         currentLatitude = data.getDouble("latitude");
                         routeFromServer = data.getString("routeGeometry");
-                        //Pass routeFromServer to draw line
-                        if (routeFromServer != null) {
-                            addRouteToStyle(routeFromServer);
-                        }
                         endTravelEnabledDisable = data.getBoolean("isTraveling");
-                        isSelectingStartingLocation = false;
+                        isSelectingStartingLocation = !data.getBoolean("isTraveling");
                         loggedIn = true;
+                        placeStartingLocationMarker();
+                        //Pass routeFromServer to draw line
+                        System.out.println("Route from Server: " + routeFromServer);
+                        if (routeFromServer != "null" || routeFromServer != null) {
+                            hasSetRoute = true;
+//                            addRouteToStyle(routeFromServer);
+                        }
+//                        setDestinationMarker();
                         removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -613,6 +620,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     isSelectingStartingLocation = true;
+                    loggedIn = true;
+                    removeLoginScreen();
                 }
             });
         }
@@ -624,7 +633,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    loggedIn = false;
+                    resetBooleans();
                     logout(loginScreen);
                 }
             });
@@ -781,8 +790,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //If the player exists get player information and remove login screen
             String key = "5";
             socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
-            /*loggedIn = true;
-            switchToMainScreen(view);*/
         }
     }
 
