@@ -35,6 +35,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
 import com.mapbox.api.directions.v5.models.DirectionsResponse;
@@ -80,10 +81,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private DirectionsRoute currentRoute;
     private Point origin;
     private Point destination;
-    private SymbolLayer originMarkerSymbolLayer = null;
     private GeoJsonSource originMarkerGeoJsonSource = null;
     private SymbolLayer destinationMarkerSymbolLayer = null;
-    private GeoJsonSource destinationMarkerGeoJsonSource = null;
     final Handler handler = new Handler();
     Timer gameLoopTimer;
     TimerTask mainGameLoop;
@@ -92,9 +91,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View endOfDayScreen;
     private View howToPlayScreen;
 
-//    private boolean isMarkers = false;
-//    private boolean isWeather = false;
-//    private boolean isDestinationMarkers = false;
     private boolean hasSetRoute = false;
     private boolean loggedIn = false;
     private boolean inFocus = true;
@@ -106,8 +102,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private int dailyScore = 0;
     private int totalScore = 0;
     private String routeFromServer;
-    private String Username;
-    //private int currentTime;
     private boolean continueFromLastLoc = false;
 
     public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
@@ -213,7 +207,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         initSource(style);
                         initLayers(style);
                         //Find route and mark it on map
-                        getRoute(style, origin, destination);
+                        getRoute(origin, destination);
                         setDestinationMarker(destinationLongitude, destinationLatitude);
                         updateMarkerPosition();
                     } else {
@@ -246,29 +240,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    private String getKeyFromFile() {
-        String fileKey = "";
-        String filepath;
-
-        File file = new File(getApplicationContext().getFilesDir(), "player.txt");
-
-        if(!file.exists()) {
-            try {
-                file.createNewFile();
-                file.setReadable(true);
-                file.setWritable(true);
-                filepath = file.toString();
-                //OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
-                //outputStreamWriter.write(data);
-                //outputStreamWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        //Read
-
-        return fileKey;
-    }
+    //Marker Methods
 
     private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
         Style style = map.getStyle();
@@ -278,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         style.addImage("destination-marker-icon-id",
                 BitmapFactory.decodeResource(
                         MainActivity.this.getResources(), R.drawable.asc_destination_marker));
-        destinationMarkerGeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
+        GeoJsonSource destinationMarkerGeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
                 Point.fromLngLat(destinationLongitude, destinationLatitude)));
         style.addSource(destinationMarkerGeoJsonSource);
 
@@ -306,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
                 Point.fromLngLat(currentLongitude, currentLatitude)));
         style.addSource(originMarkerGeoJsonSource);
-        originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
+        SymbolLayer originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
         originMarkerSymbolLayer.withProperties(
                 PropertyFactory.iconImage("origin-marker-icon-id")
         );
@@ -321,6 +293,61 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
         //Change select route label
         selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectNewRouteLabel));
+    }
+
+    /////////////////////////////////////////////
+
+    //Route
+
+    private void getRoute(Point origin, Point destination) {
+        MapboxDirections client = MapboxDirections.builder()
+                .origin(origin)
+                .destination(destination)
+                .overview(DirectionsCriteria.OVERVIEW_SIMPLIFIED)
+                .profile(DirectionsCriteria.PROFILE_DRIVING)
+                .geometries(DirectionsCriteria.GEOMETRY_POLYLINE6)
+                .accessToken(Constants.MAPBOX_API_KEY)
+                .build();
+        client.enqueueCall(new Callback<DirectionsResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<DirectionsResponse> call, @NonNull Response<DirectionsResponse> response) {
+                System.out.println(call.request().url().toString());
+                Timber.d("Response code: %s", response.code());
+                if (response.body() == null) {
+                    Timber.e("No routes found, make sure you set the right user and access token.");
+                    return;
+                } else if (response.body().routes().size() < 1) {
+                    Timber.e("No routes found");
+                    return;
+                }
+                //Send Current Route GeoJson file to server
+                currentRoute = response.body().routes().get(0);
+                socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
+                addRouteToStyle(currentRoute.geometry());
+            }
+            @Override
+            public void onFailure(@NonNull Call<DirectionsResponse> call, @NonNull Throwable throwable) {
+                Timber.e("Error: %s", throwable.getMessage());
+            }
+        });
+    }
+
+    private void addRouteToStyle(String geometryRoute) {
+        Style style = map.getStyle();
+        if (style.isFullyLoaded()) {
+            GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);
+            if (source != null) {
+                Timber.d("onResponse: source != null");
+                source.setGeoJson(FeatureCollection.fromFeature(
+                        Feature.fromGeometry(LineString.fromPolyline(Objects.requireNonNull(geometryRoute), PRECISION_6))));
+            }
+        }
+    }
+
+    private void removeRoute() {
+        Style style = map.getStyle();
+        assert style != null;
+        style.removeLayer(ROUTE_LAYER_ID);
     }
 
     private void initSource(@NonNull Style loadedMapStyle) {
@@ -349,55 +376,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    private void getRoute(@NonNull final Style style, Point origin, Point destination) {
-        MapboxDirections client = MapboxDirections.builder()
-                .origin(origin)
-                .destination(destination)
-                .overview(DirectionsCriteria.OVERVIEW_SIMPLIFIED)
-                .profile(DirectionsCriteria.PROFILE_DRIVING)
-                .geometries(DirectionsCriteria.GEOMETRY_POLYLINE6)
-                .accessToken(Constants.MAPBOX_API_KEY)
-                .build();
-        client.enqueueCall(new Callback<DirectionsResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<DirectionsResponse> call, @NonNull Response<DirectionsResponse> response) {
-                System.out.println(call.request().url().toString());
-                Timber.d("Response code: %s", response.code());
-                if (response.body() == null) {
-                    Timber.e("No routes found, make sure you set the right user and access token.");
-                    return;
-                } else if (response.body().routes().size() < 1) {
-                    Timber.e("No routes found");
-                    return;
-                }
-                //Send Current Route GeoJson file to server
-                currentRoute = response.body().routes().get(0);
-                socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
-                addRouteToStyle(style);
-            }
-            @Override
-            public void onFailure(@NonNull Call<DirectionsResponse> call, @NonNull Throwable throwable) {
-                Timber.e("Error: %s", throwable.getMessage());
-            }
-        });
-    }
+    /////////////////////////////////////////////////
 
-    private void addRouteToStyle(Style style) {
-        if (style.isFullyLoaded()) {
-            GeoJsonSource source = style.getSourceAs(ROUTE_SOURCE_ID);
-            if (source != null) {
-                Timber.d("onResponse: source != null");
-                source.setGeoJson(FeatureCollection.fromFeature(
-                        Feature.fromGeometry(LineString.fromPolyline(Objects.requireNonNull(currentRoute.geometry()), PRECISION_6))));
-            }
-        }
-    }
-
-    private void removeRoute() {
-        Style style = map.getStyle();
-        assert style != null;
-        style.removeLayer(ROUTE_LAYER_ID);
-    }
+    //Draw Weather on Map
 
     private void addPolygonLayer(@NonNull Style loadedMapStyle, String layerId, String sourceId, MultiPolygon polygons, String color) {
         GeoJsonSource source = loadedMapStyle.getSourceAs(sourceId);
@@ -424,6 +405,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ));
     }
 
+    private MultiPolygon fillStorm(JSONArray storm) throws JSONException {
+        ArrayList<Polygon> tempStorms = new ArrayList<Polygon>();
+        for(int i = 0; i < storm.length(); i++) {
+            List<List<Point>> points = new ArrayList<>();
+            List<Point> outerPoints = new ArrayList<>();
+            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates").getJSONArray(0);
+            for(int x = 0; x < coordinates.length(); x++){
+                JSONArray longlat = coordinates.getJSONArray(x);
+                outerPoints.add(Point.fromLngLat(longlat.getDouble(0), longlat.getDouble(1)));
+            }
+            points.add(outerPoints);
+            tempStorms.add(Polygon.fromLngLats(points));
+        }
+        return MultiPolygon.fromPolygons(tempStorms);
+    }
+
+    private List<Feature> fillPointStorm(JSONArray storm) throws JSONException {
+        List<Feature> tempFeat = new ArrayList<>();
+        for(int i = 0; i < storm.length(); i++) {
+            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates");
+            tempFeat.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+        }
+        return tempFeat;
+    }
+
+    private void fillHailStorm(JSONArray hail) throws JSONException {
+        hailSmall.clear();
+        hailOneInch.clear();
+        hailTwoInch.clear();
+        hailThreeInch.clear();
+        for(int i = 0; i < hail.length(); i++) {
+            JSONArray coordinates = hail.getJSONObject(i).getJSONArray("coordinates");
+            int size = hail.getJSONObject(i).getInt("Size");
+            if(size < 100) {
+                hailSmall.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 100 && size < 200) {
+                hailOneInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 200 && size < 300) {
+                hailTwoInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+            else if (size >= 300) {
+                hailThreeInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
+            }
+        }
+    }
+
+    ////////////////////////////////////////////////
+
+    //Listeners
+
     /*
         Event fires when server emits the updatePlayer event
         server emits in response to an emit from App side of
@@ -432,28 +465,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Emitter.Listener onUpdatePlayer = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
-                MainActivity.this.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        JSONObject data = (JSONObject) args[0];
-                        Point currentLocation;
-                        int score;
-                        double timeLeft;
-                        JSONArray latlong;
-                        try{
-                            latlong = data.getJSONArray("currentLocation");
-                            currentLocation = Point.fromLngLat(latlong.getDouble(0), latlong.getDouble(1));
-                            score = data.getInt("currentScore");
-                            timeLeft = data.getDouble("timeLeft");
-                            updateLocation(currentLocation);
-                            updateTimeLeft(timeLeft);
-                            updateScore(score);
-                            updateMarkerPosition();
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    Point currentLocation;
+                    int score;
+                    double timeLeft;
+                    JSONArray latlong;
+                    try{
+                        latlong = data.getJSONArray("currentLocation");
+                        currentLocation = Point.fromLngLat(latlong.getDouble(0), latlong.getDouble(1));
+                        score = data.getInt("currentScore");
+                        timeLeft = data.getDouble("timeLeft");
+                        updateLocation(currentLocation);
+                        updateTimeLeft(timeLeft);
+                        updateScore(score);
+                        updateMarkerPosition();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
                     }
-                });
+                }
+            });
         }
     };
 
@@ -520,54 +553,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    private MultiPolygon fillStorm(JSONArray storm) throws JSONException {
-        ArrayList<Polygon> tempStorms = new ArrayList<Polygon>();
-        for(int i = 0; i < storm.length(); i++) {
-            List<List<Point>> points = new ArrayList<>();
-            List<Point> outerPoints = new ArrayList<>();
-            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates").getJSONArray(0);
-            for(int x = 0; x < coordinates.length(); x++){
-                JSONArray longlat = coordinates.getJSONArray(x);
-                outerPoints.add(Point.fromLngLat(longlat.getDouble(0), longlat.getDouble(1)));
-            }
-            points.add(outerPoints);
-            tempStorms.add(Polygon.fromLngLats(points));
-        }
-        return MultiPolygon.fromPolygons(tempStorms);
-    }
-
-    private List<Feature> fillPointStorm(JSONArray storm) throws JSONException {
-        List<Feature> tempFeat = new ArrayList<>();
-        for(int i = 0; i < storm.length(); i++) {
-            JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates");
-            tempFeat.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
-        }
-        return tempFeat;
-    }
-
-    private void fillHailStorm(JSONArray hail) throws JSONException {
-        hailSmall.clear();
-        hailOneInch.clear();
-        hailTwoInch.clear();
-        hailThreeInch.clear();
-        for(int i = 0; i < hail.length(); i++) {
-            JSONArray coordinates = hail.getJSONObject(i).getJSONArray("coordinates");
-            int size = hail.getJSONObject(i).getInt("Size");
-            if(size < 100) {
-                hailSmall.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
-            }
-            else if (size >= 100 && size < 200) {
-                hailOneInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
-            }
-            else if (size >= 200 && size < 300) {
-                hailTwoInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
-            }
-            else if (size >= 300) {
-                hailThreeInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
-            }
-        }
-    }
-
     private Emitter.Listener destinationReached = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
@@ -599,8 +584,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLatitude = data.getDouble("latitude");
                         routeFromServer = data.getString("routeGeometry");
                         //Pass routeFromServer to draw line
+                        if (routeFromServer != null) {
+                            addRouteToStyle(routeFromServer);
+                        }
                         endTravelEnabledDisable = data.getBoolean("isTraveling");
                         isSelectingStartingLocation = false;
+                        loggedIn = true;
+                        removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -622,7 +612,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    //All End Of Day Screen methods
+    private Emitter.Listener onDisconnect = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    loggedIn = false;
+                    logout(loginScreen);
+                }
+            });
+        }
+    };
+
     private Emitter.Listener endOfDay = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
@@ -642,18 +644,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
-    private Emitter.Listener onDisconnect = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            MainActivity.this.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    loggedIn = false;
-                    logout(loginScreen);
-                }
-            });
-        }
-    };
+    ////////////////////////////////////////////////
+
+
+    //All End Of Day Screen methods
+
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
@@ -683,14 +678,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public void switchToEndOfDayScreen() {
-        LayoutInflater inflater = getLayoutInflater();
-        endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
-        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-    }
-
     /////////////////////////////////////////////////
+
+    //Update Methods
 
     private void updateTimeLeft(double timeLeft) {
         //Get time left textView from Ui
@@ -732,6 +722,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    ///////////////////////////////////////////////////////
+
+    //Misc Methods
+
     private void sendNotificationToPhone() {
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notify = new Notification.Builder
@@ -741,6 +735,76 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         assert notificationManager != null;
         notificationManager.notify(0, notify);
     }
+
+    /////////////////////////////////////////////////////////
+
+    //Login
+
+    public void login(View view) {
+        //Get the textView for username and password from UI
+        TextView usernameTextBox = findViewById(R.id.userName_text_input);
+        //TextView passwordTextBox = findViewById(R.id.password_text_input);
+        //If both input are not null
+        if (usernameTextBox.getText() != null) {
+            //Get the text for username and password
+            String usernameTextInput = usernameTextBox.getText().toString();
+            //String passwordTextInput = passwordTextBox.getText().toString();
+            //Check if player exists
+//            if (userExists(usernameTextInput, passwordTextInput)) {
+//
+//                socket.emit("login", usernameTextInput, passwordTextInput, currentLongitude, currentLatitude, 0, 0, 0);
+//                loggedIn = true;
+//            }
+            // create new user if player does not exist
+//            else {
+//
+//            }
+            //If the player exists get player information and remove login screen
+            String key = "5";
+            socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
+            /*loggedIn = true;
+            switchToMainScreen(view);*/
+        }
+    }
+
+    private String getKeyFromFile() {
+        String fileKey = "";
+        String filepath;
+
+        File file = new File(getApplicationContext().getFilesDir(), "player.txt");
+
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+                file.setReadable(true);
+                file.setWritable(true);
+                filepath = file.toString();
+                //OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
+                //outputStreamWriter.write(data);
+                //outputStreamWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //Read
+
+        return fileKey;
+    }
+
+    ///////////////////////////////////////////////////
+
+    //Logout
+
+    public void logout(View view) {
+        socket.emit("logoff");
+        switchToLoginScreen(view);
+        //Remove everything from style
+        //Reset Selection (Basically entire app selection booleans)
+    }
+
+    //////////////////////////////////////////////////
+
+    //Stop Travel Methods
 
     public void stopTravel(View view) {
         //If in focus (No Other screens on top)
@@ -793,40 +857,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         removeInputConfirmationScreen();
     }
 
+    ////////////////////////////////////////////////////
+
+    //Screen Methods
+
+    public void switchToEndOfDayScreen() {
+        inFocus = false;
+        LayoutInflater inflater = getLayoutInflater();
+        endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
+        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+    }
+
     private void removeInputConfirmationScreen(){
         ((ViewGroup) inputConfirmationScreen.getParent()).removeView(inputConfirmationScreen);
-    }
-
-    public void login(View view) {
-        //Get the textView for username and password from UI
-        TextView usernameTextBox = findViewById(R.id.userName_text_input);
-        //TextView passwordTextBox = findViewById(R.id.password_text_input);
-        //If both input are not null
-        if (usernameTextBox.getText() != null) {
-            //Get the text for username and password
-            String usernameTextInput = usernameTextBox.getText().toString();
-            //String passwordTextInput = passwordTextBox.getText().toString();
-            //Check if player exists
-//            if (userExists(usernameTextInput, passwordTextInput)) {
-//
-//                socket.emit("login", usernameTextInput, passwordTextInput, currentLongitude, currentLatitude, 0, 0, 0);
-//                loggedIn = true;
-//            }
-            // create new user if player does not exist
-//            else {
-//
-//            }
-            //If the player exists get player information and remove login screen
-            String key = "5";
-            socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
-            loggedIn = true;
-            switchToMainScreen(view);
-        }
-    }
-
-    public void logout(View view) {
-        socket.emit("logoff");
-        switchToLoginScreen(view);
     }
 
     public void switchToHowToPlayScreen(View view) {
@@ -844,10 +888,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
 
+    public void switchToMainScreen(View view) {
+        removeLoginScreen();
+    }
+
     public void switchToLoginScreen(View view) {
         if (inFocus) {
             addLoginScreen();
         }
+    }
+
+    private void removeLoginScreen(){
+        inFocus = true;
+        ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
     }
 
     private void addLoginScreen(){
@@ -858,10 +911,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
-    public void switchToMainScreen(View view) {
-        inFocus = true;
-        ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
-    }
+    /////////////////////////////////////////////////
 
     @Override
     public void onStart() {
