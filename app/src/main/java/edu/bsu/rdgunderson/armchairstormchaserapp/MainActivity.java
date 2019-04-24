@@ -13,14 +13,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.iconSize;
-import static java.lang.Math.floor;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -66,7 +65,6 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
-import static java.lang.Math.round;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -105,6 +103,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean isSelectingStartingLocation = true;
 
     private double scoreMultiplier = 1;
+    private int dailyScore = 0;
+    private int totalScore = 0;
+    private String routeFromServer;
+    private String Username;
+    //private int currentTime;
     private boolean continueFromLastLoc = false;
 
     public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
@@ -137,6 +140,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.on("destinationReached", destinationReached);
         socket.on("endOfDay", endOfDay);
         socket.on("weatherUpdate", weatherUpdate);
+        socket.on("loginFromPrevious", loginFromPrevious);
+        socket.on("loginSuccess", loginSuccess);
         socket.connect();
 
         Mapbox.getInstance(this, Constants.MAPBOX_API_KEY);
@@ -151,13 +156,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.setStyle(new Style.Builder().fromUrl(Constants.MAPBOX_STYLE_URL), new Style.OnStyleLoaded() {
             @Override
             public void onStyleLoaded(@NonNull Style style) {
-
                 map = mapboxMap;
-
                 socket.emit("getWeatherUpdate");
-
+                //String key = getKeyFromFile();
+                //socket.emit("login", Username, key, currentLongitude, currentLatitude, dailyScore, totalScore, scoreMultiplier);
                 addLoginScreen();
-
                 startGame();
             }
 
@@ -168,16 +171,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
 
             void initializeGameLoop() {
-
                 mainGameLoop = new TimerTask() {
                     public void run() {
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when gameLoopTimer task runs if the player has selected a route and is not selecting a starting location
+                                //isSelectingStartingLocation = !loggedIn;
                                 if (inFocus && !isSelectingStartingLocation && loggedIn) {
                                     socket.emit("getPlayerUpdate");
-                                    updateMarkerPosition();
+                                    //updateMarkerPosition();
                                 }
+                                //Enable or Disable End of Day buttons based on Time
+                                //toggleEndOfDayButtons();
                                 //If the player has a set route toggle buttons and labels accordingly
                                 endTravelEnabledDisable = hasSetRoute;
                                 toggleStopTravelButton(endTravelEnabledDisable);
@@ -191,9 +196,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
-                //If the player is traveling don't select a new route before stopping the other
+                //if ()
+                //If the player is traveling don't select a new route before stopping the other and map is in focus
                 if (!endTravelEnabledDisable && inFocus) {
-                    //If the player isn't selecting a starting location
+                    //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
                         hasSetRoute = true;
                         //Get coordinates of location clicked
@@ -216,6 +222,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             //If selecting a starting location get coordinates of point clicked and set as current
                             currentLatitude = point.getLatitude();
                             currentLongitude = point.getLongitude();
+                            System.out.println(currentLatitude);
+                            System.out.println(currentLongitude);
                             //Place marker where current lcoation is selected
                             placeStartingLocationMarker();
                             //Change instruction text to reflect change
@@ -238,13 +246,35 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
+    private String getKeyFromFile() {
+        String fileKey = "";
+        String filepath;
+
+        File file = new File(getApplicationContext().getFilesDir(), "player.txt");
+
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+                file.setReadable(true);
+                file.setWritable(true);
+                filepath = file.toString();
+                //OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
+                //outputStreamWriter.write(data);
+                //outputStreamWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        //Read
+
+        return fileKey;
+    }
+
     private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
         Style style = map.getStyle();
-
         if (destinationMarkerSymbolLayer != null) {
             removeDestinationMarker();
         }
-
         style.addImage("destination-marker-icon-id",
                 BitmapFactory.decodeResource(
                         MainActivity.this.getResources(), R.drawable.asc_destination_marker));
@@ -276,7 +306,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         originMarkerGeoJsonSource = new GeoJsonSource("origin-source-id", Feature.fromGeometry(
                 Point.fromLngLat(currentLongitude, currentLatitude)));
         style.addSource(originMarkerGeoJsonSource);
-
         originMarkerSymbolLayer = new SymbolLayer("originMarker-layer-id", "origin-source-id");
         originMarkerSymbolLayer.withProperties(
                 PropertyFactory.iconImage("origin-marker-icon-id")
@@ -309,21 +338,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void initLayers(@NonNull Style loadedMapStyle) {
         LineLayer routeLayer = new LineLayer(ROUTE_LAYER_ID, ROUTE_SOURCE_ID);
-
         routeLayer.setProperties(
                 lineCap(Property.LINE_CAP_ROUND),
                 lineJoin(Property.LINE_JOIN_ROUND),
                 lineWidth(5f),
                 lineColor(Color.parseColor(Constants.ROUTE_LINE_COLOR))
         );
-
         if (loadedMapStyle.getLayer(ROUTE_LAYER_ID) == null) {
             loadedMapStyle.addLayerBelow(routeLayer, "originMarker-layer-id");
         }
     }
 
     private void getRoute(@NonNull final Style style, Point origin, Point destination) {
-
         MapboxDirections client = MapboxDirections.builder()
                 .origin(origin)
                 .destination(destination)
@@ -332,7 +358,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .geometries(DirectionsCriteria.GEOMETRY_POLYLINE6)
                 .accessToken(Constants.MAPBOX_API_KEY)
                 .build();
-
         client.enqueueCall(new Callback<DirectionsResponse>() {
             @Override
             public void onResponse(@NonNull Call<DirectionsResponse> call, @NonNull Response<DirectionsResponse> response) {
@@ -350,7 +375,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
                 addRouteToStyle(style);
             }
-
             @Override
             public void onFailure(@NonNull Call<DirectionsResponse> call, @NonNull Throwable throwable) {
                 Timber.e("Error: %s", throwable.getMessage());
@@ -381,12 +405,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             loadedMapStyle.removeLayer(layerId);
             loadedMapStyle.removeSource(sourceId);
         }
-
         loadedMapStyle.addSource(new GeoJsonSource(sourceId, polygons));
         loadedMapStyle.addLayer(new FillLayer(layerId, sourceId).withProperties(
                 PropertyFactory.fillColor(Color.parseColor(color)),PropertyFactory.fillOpacity(.7f),PropertyFactory.fillOutlineColor(Color.parseColor("#000000"))
         ));
-
     }
 
     private void addPointLayer(@NonNull Style loadedMapStyle, String layerId, String sourceId, List<Feature> points, String color) {
@@ -400,7 +422,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 PropertyFactory.circleColor(Color.parseColor(color)),
                 PropertyFactory.circleRadius(3f)
                 ));
-
     }
 
     /*
@@ -427,6 +448,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             updateLocation(currentLocation);
                             updateTimeLeft(timeLeft);
                             updateScore(score);
+                            updateMarkerPosition();
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -442,46 +464,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     JSONObject obj = (JSONObject) args[0];
-
                     try{
                         JSONArray weather = obj.getJSONArray("storms");
-
                         JSONArray tornWarn = weather.getJSONArray(0);
                         if(tornWarn.length() > 0) {
                             tornadoWarnings = fillStorm(tornWarn);
                             addPolygonLayer(map.getStyle(), "tornado_warnings_layer", "tornado_warnings_source", tornadoWarnings, "#ff0000");
                         }
-
                         JSONArray tornWatch = weather.getJSONArray(1);
                         if(tornWatch.length() > 0) {
                             tornadoWatches = fillStorm(tornWatch);
                             addPolygonLayer(map.getStyle(), "tornado_watch_layer", "tornado_watch_source", tornadoWatches, "#f8ff29");
                         }
-
                         JSONArray tsWarn = weather.getJSONArray(2);
                         if(tsWarn.length() > 0) {
                             tsWarnings = fillStorm(tsWarn);
                             addPolygonLayer(map.getStyle(), "thunderstorm_warning_layer", "thunderstorm_warning_source", tsWarnings, "#0eaa0e");
                         }
-
                         JSONArray tsWatch = weather.getJSONArray(3);
                         if(tsWatch.length() > 0) {
                             tsWatches = fillStorm(tsWatch);
                             addPolygonLayer(map.getStyle(), "thunderstorm_watch_layer", "thunderstorm_watch_source", tsWatches, "#33f1ff");
                         }
-
                         JSONArray wind = weather.getJSONArray(4);
                         if(wind.length() > 0) {
                             windPoints = fillPointStorm(wind);
                             addPointLayer(map.getStyle(), "wind_layer", "wind_source", windPoints, "#64fe10");
                         }
-
                         JSONArray tornado = weather.getJSONArray(5);
                         if(tornado.length() > 0) {
                             tornadoPoints = fillPointStorm(tornado);
                             addPointLayer(map.getStyle(), "tornado_layer", "tornado_source", tornadoPoints, "#960606");
                         }
-
                         JSONArray hail = weather.getJSONArray(6);
                         if(hail.length() > 0) {
                             fillHailStorm(hail);
@@ -498,8 +512,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 addPointLayer(map.getStyle(), "hail_three_layer", "hail_three_source", hailThreeInch, "#1400eb");
                             }
                         }
-
-
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -510,12 +522,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private MultiPolygon fillStorm(JSONArray storm) throws JSONException {
         ArrayList<Polygon> tempStorms = new ArrayList<Polygon>();
-
         for(int i = 0; i < storm.length(); i++) {
-
             List<List<Point>> points = new ArrayList<>();
             List<Point> outerPoints = new ArrayList<>();
-
             JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates").getJSONArray(0);
             for(int x = 0; x < coordinates.length(); x++){
                 JSONArray longlat = coordinates.getJSONArray(x);
@@ -523,14 +532,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             points.add(outerPoints);
             tempStorms.add(Polygon.fromLngLats(points));
-
         }
         return MultiPolygon.fromPolygons(tempStorms);
     }
 
     private List<Feature> fillPointStorm(JSONArray storm) throws JSONException {
         List<Feature> tempFeat = new ArrayList<>();
-
         for(int i = 0; i < storm.length(); i++) {
             JSONArray coordinates = storm.getJSONObject(i).getJSONArray("coordinates");
             tempFeat.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
@@ -543,7 +550,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         hailOneInch.clear();
         hailTwoInch.clear();
         hailThreeInch.clear();
-
         for(int i = 0; i < hail.length(); i++) {
             JSONArray coordinates = hail.getJSONObject(i).getJSONArray("coordinates");
             int size = hail.getJSONObject(i).getInt("Size");
@@ -560,7 +566,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 hailThreeInch.add(Feature.fromGeometry(Point.fromLngLat(coordinates.getDouble(0), coordinates.getDouble(1))));
             }
         }
-
     }
 
     private Emitter.Listener destinationReached = new Emitter.Listener() {
@@ -580,6 +585,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private Emitter.Listener loginFromPrevious = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    try {
+                        dailyScore = data.getInt("dailyScore");
+                        totalScore = data.getInt("totalScore");
+                        currentLongitude = data.getDouble("longitude");
+                        currentLatitude = data.getDouble("latitude");
+                        routeFromServer = data.getString("routeGeometry");
+                        //Pass routeFromServer to draw line
+                        endTravelEnabledDisable = data.getBoolean("isTraveling");
+                        isSelectingStartingLocation = false;
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+            });
+        }
+    };
+
+    private Emitter.Listener loginSuccess = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    isSelectingStartingLocation = true;
+                }
+            });
+        }
+    };
+
     //All End Of Day Screen methods
     private Emitter.Listener endOfDay = new Emitter.Listener() {
         @Override
@@ -587,8 +629,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int dailyScore = 0;
-                    int totalScore = 0;
+                    //int dailyScore = 0;
+                    //int totalScore = 0;
+                    //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
                     //Set values for end of day screen
                     //setScoreOnEndOfDayScreen(dailyScore, totalScore);
@@ -654,13 +697,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView timeText = findViewById(R.id.textView_Time);
         //Set text from time left to time left updated from server
         int timesec = (int)Math.round(timeLeft);
-
         int hours = timesec / 3600;
         int minutes = (timesec % 3600) / 60;
         int seconds = (timesec % 3600) % 60;
-
         String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
-
         timeText.setText(countDown);
         timeText.setBackgroundColor(0xffffffff);
     }
@@ -694,8 +734,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void sendNotificationToPhone() {
         NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        Notification notify=new Notification.Builder
-                (getApplicationContext()).setContentTitle("Test").setContentText("Congratulations").
+        Notification notify = new Notification.Builder
+                (getApplicationContext()).setContentTitle("Armchair Stormchasers").setContentText("Congratulations").
                 setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
         notify.flags |= Notification.FLAG_AUTO_CANCEL;
         assert notificationManager != null;
@@ -760,12 +800,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void login(View view) {
         //Get the textView for username and password from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
-        TextView passwordTextBox = findViewById(R.id.password_text_input);
+        //TextView passwordTextBox = findViewById(R.id.password_text_input);
         //If both input are not null
-        if (usernameTextBox.getText() != null && passwordTextBox.getText() != null) {
+        if (usernameTextBox.getText() != null) {
             //Get the text for username and password
             String usernameTextInput = usernameTextBox.getText().toString();
-            String passwordTextInput = passwordTextBox.getText().toString();
+            //String passwordTextInput = passwordTextBox.getText().toString();
             //Check if player exists
 //            if (userExists(usernameTextInput, passwordTextInput)) {
 //
@@ -777,13 +817,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //
 //            }
             //If the player exists get player information and remove login screen
+            String key = "5";
+            socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
             loggedIn = true;
             switchToMainScreen(view);
         }
     }
 
     public void logout(View view) {
-//        socket.emit("logoff");
+        socket.emit("logoff");
         switchToLoginScreen(view);
     }
 
