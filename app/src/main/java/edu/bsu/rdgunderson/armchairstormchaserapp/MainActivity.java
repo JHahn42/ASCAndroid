@@ -598,8 +598,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         placeStartingLocationMarker();
                         Style style = map.getStyle();
                         if (isTraveling) {
-//                            destinationLongitude = (double) data.getJSONObject("destination").getJSONObject("geometry").getJSONArray("coordinates").get(0);
-//                            destinationLatitude = (double) data.getJSONObject("destination").getJSONObject("geometry").getJSONArray("coordinates").get(0);
+
                             destinationLongitude = data.getDouble("destLon");
                             destinationLatitude =  data.getDouble("destLat");
                             destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
@@ -659,12 +658,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
-                    //Set Buttons Disabled
-//                    setEndOfDayScreenButtons(false);
-                    //Set values for end of day screen
-                    //setScoreOnEndOfDayScreen(dailyScore, totalScore);
-                    //Switch view to end of day screen
                     switchToEndOfDayScreen();
+                    //Set Buttons Disabled
+                    setEndOfDayScreenButtons(false);
+                    //Set values for end of day screen
+                    setScoreOnEndOfDayScreen(dailyScore, totalScore);
+                    //Switch view to end of day screen
+
                 }
             });
         }
@@ -698,26 +698,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
-        //TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
-        //TextView totalScoreText = findViewById(R.id.totalScore_textView);
+        TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
+        TextView totalScoreText = findViewById(R.id.totalScore_textView);
         //Set text for daily score and total score on end of day screen to score received from server
-        //dailyScoreText.setText(Integer.toString(dailyScore));
-        //totalScoreText.setText(Integer.toString(totalScore));
+        dailyScoreText.setText(Integer.toString(dailyScore));
+        totalScoreText.setText(Integer.toString(totalScore));
     }
 
     private void setEndOfDayScreenButtons(Boolean toggle){
 //        toggle = false;
-        /*Button continueTravel = findViewById(R.id.beginNewDay_SameLocation_button);
+        Button continueTravel = findViewById(R.id.beginNewDay_SameLocation_button);
         Button startNewTravel = findViewById(R.id.beginNewDay_NewStart_button);
         continueTravel.setEnabled(toggle);
-        startNewTravel.setEnabled(toggle);*/
+        startNewTravel.setEnabled(toggle);
     }
 
     public void beginNewDayNewStart(View view) {
         //Set to selecting starting location
 //        isSelectingStartingLocation = true;
         //Remove Marker from Screen
-        //Reset Score Multiplier; Emit to Server
+        //Reset Score Multiplier;
+        continueFromLastLoc = false;
         //Remove end of day screen if the beginning of day has begun
         if (endOfDayScreen != null) {
             ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
@@ -726,7 +727,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void beginNewDaySameStart(View view) {
         //Remove end of day screen if the beginning of day has begun
-        //Change Score Multiplier; Emit to Server
+        //Change Score Multiplier;
+        continueFromLastLoc = true;
         if (endOfDayScreen != null) {
             ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
         }
@@ -883,7 +885,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             toggleButton = View.VISIBLE;
             toggleText = View.INVISIBLE;
         } else {
-            //If the player in't traveling set button to invisible and label to visible
+            //If the player isn't traveling set button to invisible and label to visible
             toggleButton = View.INVISIBLE;
             toggleText = View.VISIBLE;
         }
@@ -976,7 +978,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResume() {
         inFocus = true;
-        socket.emit("connection");
         super.onResume();
         mapView.onResume();
     }
@@ -984,14 +985,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onPause() {
         inFocus = false;
-        socket.emit("disconnect");
         super.onPause();
         mapView.onPause();
     }
 
     @Override
     public void onStop() {
-        socket.emit("disconnect");
         super.onStop();
         mapView.onStop();
     }
@@ -1004,14 +1003,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onDestroy() {
-        socket.emit("disconnect");
         super.onDestroy();
         mapView.onDestroy();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        socket.emit("disconnect");
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
     }
