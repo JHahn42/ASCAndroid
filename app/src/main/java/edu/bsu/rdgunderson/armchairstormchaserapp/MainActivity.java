@@ -613,7 +613,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
 
 //                        setDestinationMarker();
-                        removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -630,7 +629,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     isSelectingStartingLocation = true;
-                    removeLoginScreen();
                 }
             });
         }
@@ -655,16 +653,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //int dailyScore = 0;
-                    //int totalScore = 0;
+                    int dailyScore = 0;
+                    int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
-                    //Set values for end of day screen
-                    //setScoreOnEndOfDayScreen(dailyScore, totalScore);
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
                     //Set Buttons Disabled
                     setEndOfDayScreenButtons(false);
+                    //Set values for end of day screen
+                    setScoreOnEndOfDayScreen(dailyScore, totalScore);
                 }
             });
         }
@@ -698,11 +696,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
-        //TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
-        //TextView totalScoreText = findViewById(R.id.totalScore_textView);
+        TextView dailyScoreText = findViewById(R.id.dailyScore_textView);
+        TextView totalScoreText = findViewById(R.id.totalScore_textView);
         //Set text for daily score and total score on end of day screen to score received from server
-        //dailyScoreText.setText(Integer.toString(dailyScore));
-        //totalScoreText.setText(Integer.toString(totalScore));
+        dailyScoreText.setText(Integer.toString(dailyScore));
+        totalScoreText.setText(Integer.toString(totalScore));
     }
 
     private void setEndOfDayScreenButtons(Boolean toggle){
@@ -798,7 +796,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         inFocus = false;
         isTraveling = false;
         isEndOfDay = false;
-//        isSelectingStartingLocation = true;
     }
 
     /////////////////////////////////////////////////////////
@@ -809,11 +806,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Get the textView for username from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         //If input is not null
-        if (usernameTextBox.getText() != null) {
+        if (usernameTextBox.getText() != null && !isEndOfDay) {
             String usernameTextInput = usernameTextBox.getText().toString();
             String key = "5";
             socket.emit("login", usernameTextInput, key, dailyScore, totalScore, scoreMultiplier);
         }
+        removeLoginScreen();
     }
 
     private String getKeyFromFile() {
