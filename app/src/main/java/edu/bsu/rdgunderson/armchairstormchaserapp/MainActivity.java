@@ -186,11 +186,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
-                    //If the player is traveling don't select a new route before stopping the other and map is in focus
-                /*System.out.println("inFocus: " + inFocus);
-                System.out.println("isSelectingStartingLocation: " + isSelectingStartingLocation);
-                System.out.println("hasSetRoute: " + hasSetRoute);
-                System.out.println("isTraveling: " + isTraveling);*/
+                //If the player is traveling don't select a new route before stopping the other and map is in focus
                 if (inFocus && !isTraveling) {
                     //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
@@ -207,13 +203,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                        initLayers(style);
                         //Find route and mark it on map
                         getRoute(origin, destination);
-                        setDestinationMarker(destinationLongitude, destinationLatitude);
+//                        setDestinationMarker(destinationLongitude, destinationLatitude);
                         updateMarkerPosition();
                         toggleStopTravelButton(true);
                     } else {
                         //If selecting a starting location get coordinates of point clicked and set as current
                         currentLatitude = point.getLatitude();
                         currentLongitude = point.getLongitude();
+                        currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
                         //Place marker where current lcoation is selected
                         placeStartingLocationMarker();
                         //Change instruction text to reflect change
@@ -602,6 +599,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         totalScore = data.getInt("totalScore");
                         currentLongitude = data.getDouble("currentLon");
                         currentLatitude = data.getDouble("currentLat");
+                        currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
                         routeFromServer = data.getString("routeGeometry");
                         isTraveling = data.getBoolean("isTraveling");
                         removeOriginMarker();
@@ -639,6 +637,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    isSelectingStartingLocation = true;
                     removeLoginScreen();
                 }
             });
@@ -796,6 +795,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void resetBooleans() {
+        currentLocation = null;
         inFocus = false;
         isTraveling = false;
         isEndOfDay = false;
