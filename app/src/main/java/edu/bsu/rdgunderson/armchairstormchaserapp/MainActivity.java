@@ -813,7 +813,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (usernameTextBox.getText() != null) {
             String usernameTextInput = usernameTextBox.getText().toString();
             String key = "5";
-            socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
+            socket.emit("login", usernameTextInput, key, dailyScore, totalScore, scoreMultiplier);
         }
     }
 
