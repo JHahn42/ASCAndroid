@@ -202,8 +202,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //get destination
                         destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
                         Style style = mapboxMap.getStyle();
-                        initSource(style);
-                        initLayers(style);
+//                        initSource(style);
+//                        initLayers(style);
                         //Find route and mark it on map
                         getRoute(origin, destination);
                         setDestinationMarker(destinationLongitude, destinationLatitude);
@@ -260,6 +260,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void placeStartingLocationMarker() {
         Style style = map.getStyle();
+//        if (style.getSource("origin-source-id") != null) {
+//            style.removeSource("origin-source-id");
+//        }
         style.addImage("origin-marker-icon-id",
                 BitmapFactory.decodeResource(
                         MainActivity.this.getResources(), R.drawable.asc_logo_small));
@@ -300,6 +303,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Route
 
     private void getRoute(Point origin, Point destination) {
+        Style style = map.getStyle();
+        initSource(style);
+        initLayers(style);
         MapboxDirections client = MapboxDirections.builder()
                 .origin(origin)
                 .destination(destination)
@@ -357,6 +363,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         GeoJsonSource iconGeoJsonSource = new GeoJsonSource(ICON_SOURCE_ID, FeatureCollection.fromFeatures(new Feature[] {
                 Feature.fromGeometry(Point.fromLngLat(origin.longitude(), origin.latitude())),
+                Feature.fromGeometry(Point.fromLngLat(destination.longitude(), destination.latitude()))}));
+        if (loadedMapStyle.getSourceAs(ICON_SOURCE_ID) == null) {
+            loadedMapStyle.addSource(iconGeoJsonSource);
+        }
+    }
+
+    private void initSourceFromServer(@NonNull Style loadedMapStyle) {
+        if (loadedMapStyle.getSourceAs(ROUTE_SOURCE_ID) == null) {
+            loadedMapStyle.addSource(new GeoJsonSource(ROUTE_SOURCE_ID,
+                    FeatureCollection.fromFeatures(new Feature[]{})));
+        }
+        GeoJsonSource iconGeoJsonSource = new GeoJsonSource(ICON_SOURCE_ID, FeatureCollection.fromFeatures(new Feature[] {
+                Feature.fromGeometry(Point.fromLngLat(currentLongitude, currentLatitude)),
                 Feature.fromGeometry(Point.fromLngLat(destination.longitude(), destination.latitude()))}));
         if (loadedMapStyle.getSourceAs(ICON_SOURCE_ID) == null) {
             loadedMapStyle.addSource(iconGeoJsonSource);
@@ -580,22 +599,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     try {
                         dailyScore = data.getInt("dailyScore");
                         totalScore = data.getInt("totalScore");
-                        currentLongitude = data.getDouble("longitude");
-                        currentLatitude = data.getDouble("latitude");
+                        currentLongitude = data.getDouble("currentLon");
+                        currentLatitude = data.getDouble("currentLat");
                         routeFromServer = data.getString("routeGeometry");
                         isTraveling = data.getBoolean("isTraveling");
-                        //
-//                        endTravelEnabledDisable = data.getBoolean("isTraveling");
-                        isSelectingStartingLocation = data.getBoolean("isTraveling");
-                        //
-//                        loggedIn = true;
                         removeOriginMarker();
                         placeStartingLocationMarker();
-                        //Pass routeFromServer to draw line
-                        System.out.println("Route from Server: " + routeFromServer);
-                        if (routeFromServer != "null" || routeFromServer != null) {
-//                            addRouteToStyle(routeFromServer);
+                        Style style = map.getStyle();
+                        if (isTraveling) {
+//                            destinationLongitude = (double) data.getJSONObject("destination").getJSONObject("geometry").getJSONArray("coordinates").get(0);
+//                            destinationLatitude = (double) data.getJSONObject("destination").getJSONObject("geometry").getJSONArray("coordinates").get(0);
+                            destinationLongitude = data.getDouble("destLon");
+                            destinationLatitude =  data.getDouble("destLat");
+                            initSourceFromServer(style);
+                            initLayers(style);
+                            addRouteToStyle(routeFromServer);
                         }
+                        isSelectingStartingLocation = (style.getSource("origin-source-id")) == null;
+                        if (isSelectingStartingLocation) {
+                            changeStartingLocationText();
+                        }
+
 //                        setDestinationMarker();
                         removeLoginScreen();
                     } catch (JSONException e) {
@@ -613,8 +637,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    isSelectingStartingLocation = true;
-//                    loggedIn = true;
                     removeLoginScreen();
                 }
             });
@@ -763,25 +785,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Login
 
     public void login(View view) {
-        //Get the textView for username and password from UI
+        //Get the textView for username from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
-        //TextView passwordTextBox = findViewById(R.id.password_text_input);
-        //If both input are not null
+        //If input is not null
         if (usernameTextBox.getText() != null) {
-            //Get the text for username and password
             String usernameTextInput = usernameTextBox.getText().toString();
-            //String passwordTextInput = passwordTextBox.getText().toString();
-            //Check if player exists
-//            if (userExists(usernameTextInput, passwordTextInput)) {
-//
-//                socket.emit("login", usernameTextInput, passwordTextInput, currentLongitude, currentLatitude, 0, 0, 0);
-//                loggedIn = true;
-//            }
-            // create new user if player does not exist
-//            else {
-//
-//            }
-            //If the player exists get player information and remove login screen
             String key = "5";
             socket.emit("login", usernameTextInput, key, -85, 40, dailyScore, totalScore, scoreMultiplier);
         }
@@ -944,6 +952,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResume() {
         inFocus = true;
+        socket.emit("connection");
         super.onResume();
         mapView.onResume();
     }
@@ -951,12 +960,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onPause() {
         inFocus = false;
+        socket.emit("disconnect");
         super.onPause();
         mapView.onPause();
     }
 
     @Override
     public void onStop() {
+        socket.emit("disconnect");
         super.onStop();
         mapView.onStop();
     }
@@ -969,12 +980,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     protected void onDestroy() {
+        socket.emit("disconnect");
         super.onDestroy();
         mapView.onDestroy();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
+        socket.emit("disconnect");
         super.onSaveInstanceState(outState);
         mapView.onSaveInstanceState(outState);
     }
