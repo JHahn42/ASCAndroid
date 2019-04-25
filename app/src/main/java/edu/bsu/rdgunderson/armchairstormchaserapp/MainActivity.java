@@ -71,21 +71,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private MapboxMap map;
     private MapView mapView;
+
+    private Point origin;
     private double currentLatitude;
     private double currentLongitude;
+    public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
     private double destinationLatitude;
     private double destinationLongitude;
+    private Point destination;
+
     private static final String ROUTE_LAYER_ID = "route-layer-id";
     private static final String ROUTE_SOURCE_ID = "route-source-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
-    private DirectionsRoute currentRoute;
-    private Point origin;
-    private Point destination;
     private GeoJsonSource originMarkerGeoJsonSource = null;
     private SymbolLayer destinationMarkerSymbolLayer = null;
+    private DirectionsRoute currentRoute;
+
     final Handler handler = new Handler();
     Timer gameLoopTimer;
     TimerTask mainGameLoop;
+
     private View loginScreen;
     private View inputConfirmationScreen;
     private View endOfDayScreen;
@@ -95,14 +100,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private boolean isTraveling = false;
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
+    private boolean continueFromLastLoc = false;
 
     private double scoreMultiplier = 1;
     private int dailyScore = 0;
     private int totalScore = 0;
     private String routeFromServer;
-    private boolean continueFromLastLoc = false;
-
-    public Point currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
 
     private Socket socket;
 
@@ -158,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             void startGame() {
                 gameLoopTimer = new Timer();
                 initializeGameLoop();
-                gameLoopTimer.schedule(mainGameLoop, 0, Constants.REFRESH_RATE_IN_SECONDS * 1000);
+                gameLoopTimer.schedule(mainGameLoop, 5000, Constants.REFRESH_RATE_IN_SECONDS * 1000);
             }
 
             void initializeGameLoop() {
@@ -568,12 +571,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (inFocus) {
-                        removeRoute();
-                        isTraveling = false;
-                    } else {
-                        sendNotificationToPhone();
-                    }
+                    removeRoute();
+                    sendNotificationToPhone();
+                    isTraveling = false;
                 }
             });
         }
@@ -598,7 +598,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         placeStartingLocationMarker();
                         Style style = map.getStyle();
                         if (isTraveling) {
-
                             destinationLongitude = data.getDouble("destLon");
                             destinationLatitude =  data.getDouble("destLat");
                             destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
@@ -610,9 +609,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (isSelectingStartingLocation) {
                             changeStartingLocationText();
                         }
-                        removeLoginScreen();
-
 //                        setDestinationMarker();
+                        removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -658,6 +656,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
+                    if (loginScreen != null) {
+//                        removeLoginScreen();
+                        toggleHideUserNameInput(false);
+                    }
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
                     //Set Buttons Disabled
@@ -815,6 +817,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             socket.emit("login", usernameTextInput, key, dailyScore, totalScore, scoreMultiplier);
         }
 
+    }
+
+    public void toggleHideUserNameInput(Boolean toggle){
+        TextView usernameTextBox = findViewById(R.id.userName_text_input);
+        usernameTextBox.setEnabled(toggle);
     }
 
     private String getKeyFromFile() {
@@ -975,14 +982,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onResume() {
-        inFocus = true;
+//        inFocus = true;
         super.onResume();
         mapView.onResume();
     }
 
     @Override
     public void onPause() {
-        inFocus = false;
+//        inFocus = false;
         super.onPause();
         mapView.onPause();
     }
