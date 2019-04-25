@@ -91,9 +91,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private View endOfDayScreen;
     private View howToPlayScreen;
 
-//    private boolean loggedIn = false;
     private boolean inFocus = true;
-//    private boolean endTravelEnabledDisable = false;
     private boolean isTraveling = false;
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
@@ -187,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
                 //If the player is traveling don't select a new route before stopping the other and map is in focus
-                if (inFocus && !isTraveling) {
+                if (inFocus && !isTraveling && !isEndOfDay) {
                     //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
                         isTraveling = true;
@@ -198,9 +196,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         origin = Point.fromLngLat(currentLongitude, currentLatitude);
                         //get destination
                         destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
-                        Style style = mapboxMap.getStyle();
-//                        initSource(style);
-//                        initLayers(style);
                         //Find route and mark it on map
                         getRoute(origin, destination);
 //                        setDestinationMarker(destinationLongitude, destinationLatitude);
@@ -234,7 +229,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     //Marker Methods
 
-    private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
+    /*private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
         Style style = map.getStyle();
         if (destinationMarkerSymbolLayer != null) {
             removeDestinationMarker();
@@ -254,13 +249,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 iconAllowOverlap(false),
                 iconIgnorePlacement(true)
         ));
-    }
+    }*/
 
     private void placeStartingLocationMarker() {
         Style style = map.getStyle();
-//        if (style.getSource("origin-source-id") != null) {
-//            style.removeSource("origin-source-id");
-//        }
         style.addImage("origin-marker-icon-id",
                 BitmapFactory.decodeResource(
                         MainActivity.this.getResources(), R.drawable.asc_logo_small));
@@ -667,6 +659,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
+                    //Set Buttons Disabled
+//                    setEndOfDayScreenButtons(false);
                     //Set values for end of day screen
                     //setScoreOnEndOfDayScreen(dailyScore, totalScore);
                     //Switch view to end of day screen
@@ -709,6 +703,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Set text for daily score and total score on end of day screen to score received from server
         //dailyScoreText.setText(Integer.toString(dailyScore));
         //totalScoreText.setText(Integer.toString(totalScore));
+    }
+
+    private void setEndOfDayScreenButtons(Boolean toggle){
+//        toggle = false;
+        /*Button continueTravel = findViewById(R.id.beginNewDay_SameLocation_button);
+        Button startNewTravel = findViewById(R.id.beginNewDay_NewStart_button);
+        continueTravel.setEnabled(toggle);
+        startNewTravel.setEnabled(toggle);*/
     }
 
     public void beginNewDayNewStart(View view) {
