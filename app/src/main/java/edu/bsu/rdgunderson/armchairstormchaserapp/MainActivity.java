@@ -610,9 +610,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         if (isSelectingStartingLocation) {
                             changeStartingLocationText();
                         }
+                        removeLoginScreen();
 
 //                        setDestinationMarker();
-                        removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
@@ -654,17 +654,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //int dailyScore = 0;
-                    //int totalScore = 0;
+                    int dailyScore = 0;
+                    int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
+                    //Switch view to end of day screen
                     switchToEndOfDayScreen();
                     //Set Buttons Disabled
                     setEndOfDayScreenButtons(false);
                     //Set values for end of day screen
                     setScoreOnEndOfDayScreen(dailyScore, totalScore);
-                    //Switch view to end of day screen
-
                 }
             });
         }
@@ -706,11 +705,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setEndOfDayScreenButtons(Boolean toggle){
-//        toggle = false;
-        Button continueTravel = findViewById(R.id.beginNewDay_SameLocation_button);
-        Button startNewTravel = findViewById(R.id.beginNewDay_NewStart_button);
-        continueTravel.setEnabled(toggle);
-        startNewTravel.setEnabled(toggle);
+        findViewById(R.id.beginNewDay_SameLocation_button).setEnabled(toggle);
+        findViewById(R.id.beginNewDay_NewStart_button).setEnabled(toggle);
     }
 
     public void beginNewDayNewStart(View view) {
@@ -803,7 +799,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         inFocus = false;
         isTraveling = false;
         isEndOfDay = false;
-//        isSelectingStartingLocation = true;
     }
 
     /////////////////////////////////////////////////////////
@@ -814,11 +809,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Get the textView for username from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         //If input is not null
-        if (usernameTextBox.getText() != null) {
+        if (usernameTextBox.getText() != null && !isEndOfDay) {
             String usernameTextInput = usernameTextBox.getText().toString();
             String key = "5";
             socket.emit("login", usernameTextInput, key, dailyScore, totalScore, scoreMultiplier);
         }
+
     }
 
     private String getKeyFromFile() {
@@ -850,12 +846,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Logout
 
     public void logout(View view) {
-        socket.emit("logoff");
-        switchToLoginScreen(view);
-        //Remove everything from style
-        removeNonWeatherFromStyle();
-        //Reset Selection (Basically entire app selection booleans)
-        resetBooleans();
+        if (inFocus) {
+            socket.emit("logoff");
+            switchToLoginScreen(view);
+            //Remove everything from style
+            removeNonWeatherFromStyle();
+            //Reset Selection (Basically entire app selection booleans)
+            resetBooleans();
+        }
     }
 
     //////////////////////////////////////////////////
