@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
         // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        socket.on("error", onError);
+        socket.on("errorMessage", onError);
         socket.on("updatePlayer", onUpdatePlayer);
         socket.on("destinationReached", destinationReached);
         socket.on("endOfDay", endOfDay);
