@@ -580,8 +580,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     try {
                         dailyScore = data.getInt("dailyScore");
                         totalScore = data.getInt("totalScore");
-                        currentLongitude = data.getDouble("longitude");
-                        currentLatitude = data.getDouble("latitude");
+                        currentLongitude = data.getDouble("currentLon");
+                        currentLatitude = data.getDouble("currentLat");
+                        destinationLongitude = data.getDouble("destLon");
+                        destinationLatitude = data.getDouble("destLat");
                         routeFromServer = data.getString("routeGeometry");
                         isTraveling = data.getBoolean("isTraveling");
                         //
