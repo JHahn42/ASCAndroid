@@ -106,7 +106,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/asc_logo_large_EndOfDay"
+        app:srcCompat="@drawable/asc_logo_large_endofday"
         tools:ignore="MissingConstraints" />
 
     <Button
