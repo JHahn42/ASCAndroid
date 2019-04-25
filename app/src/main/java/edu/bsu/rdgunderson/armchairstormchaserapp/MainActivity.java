@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         else {
                             scoreMultiplier = 1;
                         }
-                        socket.emit("startLocationSelect", currentLatitude, currentLongitude, scoreMultiplier);
+                        socket.emit("startLocationSelect", currentLongitude, currentLatitude, scoreMultiplier);
                         //Mark player as not selecting a starting location
                         isSelectingStartingLocation = false;
                     }
@@ -322,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
                 //Send Current Route GeoJson file to server
                 currentRoute = response.body().routes().get(0);
-                socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration());
+                socket.emit("setTravelRoute", currentRoute.geometry(), currentRoute.distance(), currentRoute.duration(), destinationLongitude, destinationLatitude);
                 addRouteToStyle(currentRoute.geometry());
             }
             @Override
