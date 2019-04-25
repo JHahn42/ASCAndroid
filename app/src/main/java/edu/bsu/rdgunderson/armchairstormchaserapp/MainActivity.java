@@ -612,6 +612,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 //                            destinationLatitude = (double) data.getJSONObject("destination").getJSONObject("geometry").getJSONArray("coordinates").get(0);
                             destinationLongitude = data.getDouble("destLon");
                             destinationLatitude =  data.getDouble("destLat");
+                            destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
                             initSourceFromServer(style);
                             initLayers(style);
                             addRouteToStyle(routeFromServer);
