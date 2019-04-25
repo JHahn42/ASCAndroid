@@ -130,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
         // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
+        socket.on("error", onError);
         socket.on("updatePlayer", onUpdatePlayer);
         socket.on("destinationReached", destinationReached);
         socket.on("endOfDay", endOfDay);
@@ -650,6 +651,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //setScoreOnEndOfDayScreen(dailyScore, totalScore);
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
+                }
+            });
+        }
+    };
+    
+    // prints error message to console when an illegal action is picked up by the server.
+    private Emitter.Listener onError = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    try {
+                        String error = data.getString("errorMessage");
+                        System.out.println(error);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             });
         }
