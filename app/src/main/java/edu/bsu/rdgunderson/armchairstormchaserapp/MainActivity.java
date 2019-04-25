@@ -659,12 +659,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
-                    //Set Buttons Disabled
-//                    setEndOfDayScreenButtons(false);
                     //Set values for end of day screen
                     //setScoreOnEndOfDayScreen(dailyScore, totalScore);
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
+                    //Set Buttons Disabled
+                    setEndOfDayScreenButtons(false);
                 }
             });
         }
@@ -706,11 +706,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void setEndOfDayScreenButtons(Boolean toggle){
-//        toggle = false;
-        /*Button continueTravel = findViewById(R.id.beginNewDay_SameLocation_button);
-        Button startNewTravel = findViewById(R.id.beginNewDay_NewStart_button);
-        continueTravel.setEnabled(toggle);
-        startNewTravel.setEnabled(toggle);*/
+        findViewById(R.id.beginNewDay_SameLocation_button).setEnabled(toggle);
+        findViewById(R.id.beginNewDay_NewStart_button).setEnabled(toggle);
     }
 
     public void beginNewDayNewStart(View view) {
@@ -848,12 +845,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Logout
 
     public void logout(View view) {
-        socket.emit("logoff");
-        switchToLoginScreen(view);
-        //Remove everything from style
-        removeNonWeatherFromStyle();
-        //Reset Selection (Basically entire app selection booleans)
-        resetBooleans();
+        if (inFocus) {
+            socket.emit("logoff");
+            switchToLoginScreen(view);
+            //Remove everything from style
+            removeNonWeatherFromStyle();
+            //Reset Selection (Basically entire app selection booleans)
+            resetBooleans();
+        }
     }
 
     //////////////////////////////////////////////////
@@ -976,7 +975,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResume() {
         inFocus = true;
-        socket.emit("connection");
+//        socket.emit("connection");
         super.onResume();
         mapView.onResume();
     }
@@ -984,7 +983,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onPause() {
         inFocus = false;
-        socket.emit("disconnect");
+//        socket.emit("disconnect");
         super.onPause();
         mapView.onPause();
     }
