@@ -655,7 +655,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    resetBooleans();
+                    resetConditions();
                     logout(loginScreen);
                 }
             });
@@ -668,8 +668,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int dailyScore = 0;
-                    int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
                     if (loginScreen.hasFocus()) {
@@ -760,9 +758,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int hours = timesec / 3600;
         int minutes = (timesec % 3600) / 60;
         int seconds = (timesec % 3600) % 60;
+        if (timeIsNegative(seconds)) {
+            seconds = 0;
+        }
         String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
         timeText.setText(countDown);
         timeText.setBackgroundColor(0xffffffff);
+    }
+
+    private boolean timeIsNegative(int seconds) {
+        return seconds < 0;
     }
 
     private void updateScore(int score) {
@@ -802,7 +807,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 (getApplicationContext()).setContentTitle("Armchair Stormchasers").setContentText("Congratulations").
                 setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
         notify.flags |= Notification.FLAG_AUTO_CANCEL;
-        assert notificationManager != null;
         notificationManager.notify(0, notify);
     }
 
@@ -812,7 +816,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         removeRoute();
     }
 
-    private void resetBooleans() {
+    private void resetConditions() {
         currentLocation = null;
         mapInFocus = false;
         isTraveling = false;
@@ -830,7 +834,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (usernameTextBox.getText() != null && !isEndOfDay) {
             // get username and strip out unwanted special characters
             String usernameTextInput = usernameTextBox.getText().toString().replaceAll("[^a-zA-Z0-9\\s_-]", "");
-            String key = UUID.randomUUID().toString();
+//            String key = UUID.randomUUID().toString();
+            String key = "5";
             // check if player file has not already been read
 //            if (playersList.isEmpty()) {
 //                ArrayList<String> playerInfo = new ArrayList<String>();
@@ -914,7 +919,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Remove everything from style
             removeNonWeatherFromStyle();
             //Reset Selection (Basically entire app selection booleans)
-            resetBooleans();
+            resetConditions();
         }
     }
 
