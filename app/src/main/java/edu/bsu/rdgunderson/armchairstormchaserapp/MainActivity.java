@@ -91,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String ROUTE_SOURCE_ID = "route-source-id";
     private static final String ICON_SOURCE_ID = "icon-source-id";
     private GeoJsonSource originMarkerGeoJsonSource = null;
-    private SymbolLayer destinationMarkerSymbolLayer = null;
+//    private SymbolLayer destinationMarkerSymbolLayer = null;
     private DirectionsRoute currentRoute;
 
     final Handler handler = new Handler();
@@ -307,6 +307,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
         //Change select route label
         selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectNewRouteLabel));
+    }
+
+    private void changeStartingLocationTextBack() {
+        //Get select route textView from UI
+        TextView selectRoute = findViewById(R.id.textView_selectNewRoute);
+        //Change select route label
+        selectRoute.setText(getApplicationContext().getResources().getString(R.string.selectStartingLocationLabel));
     }
 
     /////////////////////////////////////////////
@@ -751,6 +758,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Remove end of day screen if the beginning of day has begun
 //        if (endOfDayScreen.hasFocus()) {
         ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        //Change text to Say choose new starting location
+        changeStartingLocationTextBack();
         mapInFocus = true;
 //        }
     }
@@ -843,6 +852,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapInFocus = false;
         isTraveling = false;
         isEndOfDay = false;
+        changeStartingLocationTextBack();
     }
 
     /////////////////////////////////////////////////////////
@@ -946,7 +956,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 showBeginOfDay = true;
                                 break;
                             }
-                        } // if not found creat new user profile
+                        } // if not found create new user profile
                         if(!foundPlayerProfile) {
                             ArrayList<String> newPlayer = new ArrayList<String>();
                             newPlayer.add(currentUsername);
@@ -990,7 +1000,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         showBeginOfDay = true;
                         break;
                     }
-                } // if not found creat new user profile
+                } // if not found create new user profile
                 if(!foundPlayerProfile) {
                     ArrayList<String> newPlayer = new ArrayList<String>();
                     newPlayer.add(currentUsername);
