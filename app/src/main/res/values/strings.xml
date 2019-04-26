@@ -5,7 +5,7 @@
     <string name="textView_ScoreLabel">Score: </string>
     <string name="dailyScoreLabel">Daily Score: </string>
     <string name="totalScoreLabel">Total Score: </string>
-    <string name="textView_Time_Label">Time Left: </string>
+    <string name="textView_Time_Label">Estimated Time Left: </string>
     <string name="loginButtonLabel">Login</string>
     <string name="logoutButtonLabel">Logout</string>
     <string name="goBackButtonLabel">Go Back</string>

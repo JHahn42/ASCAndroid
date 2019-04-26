@@ -673,7 +673,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    resetBooleans();
                     logout(loginScreen);
                 }
             });
@@ -686,8 +685,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    int dailyScore = 0;
-                    int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
                     if (loginScreen.hasFocus()) {
@@ -729,7 +726,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     //All End Of Day Screen methods
-
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
@@ -784,9 +780,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int hours = timesec / 3600;
         int minutes = (timesec % 3600) / 60;
         int seconds = (timesec % 3600) % 60;
+        if (timeIsNegative(seconds)) {
+            seconds = 0;
+        }
         String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
         timeText.setText(countDown);
         timeText.setBackgroundColor(0xffffffff);
+    }
+
+    private boolean timeIsNegative(int seconds) {
+        return seconds < 0;
     }
 
     private void updateScore(int score) {
@@ -826,7 +829,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 (getApplicationContext()).setContentTitle("Armchair Stormchasers").setContentText("Congratulations").
                 setContentTitle("You have reached your destination!").setSmallIcon(R.drawable.asc_logo_small).build();
         notify.flags |= Notification.FLAG_AUTO_CANCEL;
-        assert notificationManager != null;
         notificationManager.notify(0, notify);
     }
 
@@ -836,7 +838,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         removeRoute();
     }
 
-    private void resetBooleans() {
+    private void resetConditions() {
         currentLocation = null;
         mapInFocus = false;
         isTraveling = false;
@@ -1057,7 +1059,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Remove everything from style
             removeNonWeatherFromStyle();
             //Reset Selection (Basically entire app selection booleans)
-            resetBooleans();
+            resetConditions();
+        } else {
+            //When logging out from end of day screen
+            socket.emit("logoff");
+            removeEndOfDayScreen();
+            addLoginScreen();
         }
     }
 
@@ -1119,6 +1126,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ////////////////////////////////////////////////////
 
     //Screen Methods
+
+    private void removeEndOfDayScreen() {
+        if (!endOfDayScreen.hasFocus()) {
+            ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        }
+    }
 
     public void switchToEndOfDayScreen() {
         mapInFocus = false;
