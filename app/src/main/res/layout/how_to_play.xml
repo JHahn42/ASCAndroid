@@ -7,7 +7,7 @@
 
     <ImageView
         android:id="@+id/imageView4"
-        android:layout_width="0dp"
+        android:layout_width="411dp"
         android:layout_height="0dp"
         android:contentDescription="@string/background"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -30,57 +30,99 @@
     <TextView
         android:id="@+id/textView_gameTip1"
         android:layout_width="374dp"
-        android:layout_height="wrap_content"
+        android:layout_height="46dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="36dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
         android:text="@string/HowToPlay_TimeLeft"
+        android:textColor="@color/mapbox_plugins_white"
         android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textView_gameTip2"
         android:layout_width="377dp"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
         android:text="@string/HowToPlay_TimeLeft"
+        android:textColor="@color/mapbox_plugins_white"
         android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_gameTip1" />
 
     <TextView
         android:id="@+id/textView_gameTip3"
         android:layout_width="379dp"
-        android:layout_height="27dp"
+        android:layout_height="44dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="13dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
         android:text="@string/HowToPlay_SelectRoute"
+        android:textColor="@color/mapbox_plugins_white"
         android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_gameTip2" />
 
     <TextView
         android:id="@+id/textView_gameTip4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="380dp"
+        android:layout_height="29dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="15dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
         android:text="@string/HowToPlay_StopTravel"
+        android:textColor="@color/mapbox_plugins_white"
         android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_gameTip3" />
 
-    <!--
     <TextView
         android:id="@+id/textView_gameTip5"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="384dp"
+        android:layout_height="100dp"
         android:layout_marginStart="16dp"
         android:layout_marginTop="24dp"
-        android:text="@string/HowToPlay_StormValues"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
+        android:text="@string/HowToPlay_StormValuesPolygons"
+        android:textColor="@color/mapbox_plugins_white"
         android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_gameTip4" />
-    -->
+
+    <TextView
+        android:id="@+id/textView_gameTip6"
+        android:layout_width="386dp"
+        android:layout_height="78dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="250dp"
+        android:background="@drawable/ic_launcher_background"
+        android:lineSpacingExtra="8sp"
+        android:text="@string/HowToPlay_StormValuesDots"
+        android:textColor="@color/mapbox_plugins_white"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView4"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView_gameTip5" />
+
 </android.support.constraint.ConstraintLayout>

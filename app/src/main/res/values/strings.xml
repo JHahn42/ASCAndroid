@@ -32,7 +32,8 @@
     <string name="noButton">No</string>
     <string name="HowToPlay_SelectRoute">To select a route simply press any location on the map to start moving there.</string>
     <string name="HowToPlay_SelectStart">To start, simply press any location on the map where you wish to begin.</string>
-    <string name="HowToPlay_StormValues">[Information about Storm Values and colors]</string>
+    <string name="HowToPlay_StormValuesPolygons">Polygons: A red polygon is a tornado warning, a yellow polygon is a tornado watch, A green polygon is a thunderstorm warning, and a blue polygon means that there is a thunderstorm watch. You need to be inside them to get points</string>
+    <string name="HowToPlay_StormValuesDots">Dots: Green dots represent Wind Reports, the Blue dots represent Hail Reports, and the Red dots represent Tornado Reports. You need to be nearby them to get points.</string>
     <string name="HowToPlay_Score">The score for the current day is displayed on the upper right corner of the screen.</string>
     <string name="HowToPlay_TimeLeft">The time remaining for the current route is displayed on the upper right side of the screen.</string>
     <string name="HowToPlay_StopTravel">To choose a new route, you need to click the stop travel button.</string>
