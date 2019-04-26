@@ -655,7 +655,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    resetConditions();
                     logout(loginScreen);
                 }
             });
@@ -709,7 +708,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     //All End Of Day Screen methods
-
 
     private void setScoreOnEndOfDayScreen(int dailyScore, int totalScore) {
         //Get daily score and total score textViews from UI
@@ -920,6 +918,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             removeNonWeatherFromStyle();
             //Reset Selection (Basically entire app selection booleans)
             resetConditions();
+        } else {
+            //When logging out from end of day screen
+            socket.emit("logoff");
+            removeEndOfDayScreen();
+            addLoginScreen();
         }
     }
 
@@ -981,6 +984,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ////////////////////////////////////////////////////
 
     //Screen Methods
+
+    private void removeEndOfDayScreen() {
+        if (!endOfDayScreen.hasFocus()) {
+            ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        }
+    }
 
     public void switchToEndOfDayScreen() {
         mapInFocus = false;
