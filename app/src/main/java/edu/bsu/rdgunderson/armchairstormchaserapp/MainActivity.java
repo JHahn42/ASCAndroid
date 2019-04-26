@@ -14,12 +14,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -91,12 +93,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Timer gameLoopTimer;
     TimerTask mainGameLoop;
 
+    LayoutInflater inflater;
+
     private View loginScreen;
     private View inputConfirmationScreen;
     private View endOfDayScreen;
     private View howToPlayScreen;
 
-    private boolean inFocus = true;
+    private boolean mapInFocus = true;
+    private boolean appInFocus = true;
     private boolean isTraveling = false;
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
@@ -120,11 +125,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private List<Feature> hailTwoInch = new ArrayList<>();
     private List<Feature> hailThreeInch = new ArrayList<>();
 
+    private ArrayList<ArrayList<String>> playersList = new ArrayList<ArrayList<String>>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        // holds the socket
         ArmchairStormChaser app = (ArmchairStormChaser)getApplication();
+
+        // create all of the app's other pages
+        inflater = getLayoutInflater();
+
+        loginScreen = inflater.inflate(R.layout.login, null);
+        inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
+        endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
+        howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
+
 
         socket = app.getSocket();
         // socket.on(Socket.EVENT_CONNECT, onConnect);
@@ -170,7 +186,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         handler.post(new Runnable() {
                             public void run() {
                                 //Update player when gameLoopTimer task runs if the player has selected a route and is not selecting a starting location
-                                if (inFocus && isTraveling) {
+                                if (mapInFocus && appInFocus && !isEndOfDay && !isSelectingStartingLocation) {
                                     socket.emit("getPlayerUpdate");
                                 }
                                 //Enable or Disable End of Day buttons based on Time
@@ -188,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public boolean onMapClick(@NonNull LatLng point) {
                 //If the player is traveling don't select a new route before stopping the other and map is in focus
-                if (inFocus && !isTraveling && !isEndOfDay) {
+                if (mapInFocus && !isTraveling && !isEndOfDay) {
                     //If the player is selecting a new route
                     if (!isSelectingStartingLocation) {
                         isTraveling = true;
@@ -572,7 +588,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     removeRoute();
-                    sendNotificationToPhone();
+                    if(!appInFocus) {
+                        sendNotificationToPhone();
+                    }
                     isTraveling = false;
                 }
             });
@@ -605,10 +623,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             initLayers(style);
                             addRouteToStyle(routeFromServer);
                         }
-                        isSelectingStartingLocation = (style.getSource("origin-source-id")) == null;
-                        if (isSelectingStartingLocation) {
-                            changeStartingLocationText();
-                        }
+                        isSelectingStartingLocation = false;
+                        changeStartingLocationText();
 //                        setDestinationMarker();
                         removeLoginScreen();
                     } catch (JSONException e) {
@@ -656,7 +672,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     int totalScore = 0;
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
-                    if (loginScreen != null) {
+                    if (loginScreen.hasFocus()) {
 //                        removeLoginScreen();
                         toggleHideUserNameInput(false);
                     }
@@ -718,7 +734,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Reset Score Multiplier;
         continueFromLastLoc = false;
         //Remove end of day screen if the beginning of day has begun
-        if (endOfDayScreen != null) {
+        if (endOfDayScreen.hasFocus()) {
             ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
         }
     }
@@ -727,7 +743,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Remove end of day screen if the beginning of day has begun
         //Change Score Multiplier;
         continueFromLastLoc = true;
-        if (endOfDayScreen != null) {
+        if (endOfDayScreen.hasFocus()) {
             ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
         }
     }
@@ -798,7 +814,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void resetBooleans() {
         currentLocation = null;
-        inFocus = false;
+        mapInFocus = false;
         isTraveling = false;
         isEndOfDay = false;
     }
@@ -812,8 +828,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         //If input is not null
         if (usernameTextBox.getText() != null && !isEndOfDay) {
-            String usernameTextInput = usernameTextBox.getText().toString();
-            String key = "5";
+            // get username and strip out unwanted special characters
+            String usernameTextInput = usernameTextBox.getText().toString().replaceAll("[^a-zA-Z0-9\\s_-]", "");
+            String key = UUID.randomUUID().toString();
+            // check if player file has not already been read
+//            if (playersList.isEmpty()) {
+//                ArrayList<String> playerInfo = new ArrayList<String>();
+//                playerInfo.add(usernameTextInput);
+//                // key unique to a single install of this app
+//
+//                playerInfo.add(key);
+//
+//                File file = new File(getApplicationContext().getFilesDir(), "player_profiles.txt");
+//
+//                // check if file exists
+//                if (!file.exists()) {
+//                    try {
+//                        if (file.createNewFile()) {
+//                            String filepath = file.toString();
+//                            //OutputStreamWriter outputStreamWriter = new OutputStreamWriter(context.openFileOutput("config.txt", Context.MODE_PRIVATE));
+//                            //outputStreamWriter.write(data);
+//                            //outputStreamWriter.close();
+//
+//                            FileOutputStream fos = openFileOutput(filepath, Context.MODE_PRIVATE);
+//                            fos.write(string.getBytes());
+//                            fos.close();
+//                        }
+//                    } catch(IOException e){
+//                        e.printStackTrace();
+//                    }
+//
+//                }
+//                else {
+//
+//                }
+//
+//                // check for file with usernames and info
+//                // if file found create array of users
+//                // if user found fill out info
+//                // if user not found, create new user and pass 0 scores
+//
+//            }
             socket.emit("login", usernameTextInput, key, dailyScore, totalScore, scoreMultiplier);
         }
 
@@ -853,7 +908,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Logout
 
     public void logout(View view) {
-        if (inFocus) {
+        if (mapInFocus) {
             socket.emit("logoff");
             switchToLoginScreen(view);
             //Remove everything from style
@@ -869,10 +924,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void stopTravel(View view) {
         //If in focus (No Other screens on top)
-        if (inFocus) {
+        if (mapInFocus) {
             //When the stop travel button ic clicked, display in put confirmation screen
-            LayoutInflater inflater = getLayoutInflater();
-            inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
+            // LayoutInflater inflater = getLayoutInflater();
+           // inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
             getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
         }
@@ -923,11 +978,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Screen Methods
 
     public void switchToEndOfDayScreen() {
-        inFocus = false;
-        LayoutInflater inflater = getLayoutInflater();
-        endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
-        getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+        mapInFocus = false;
+        if(!endOfDayScreen.hasFocus()) {
+            // LayoutInflater inflater = getLayoutInflater();
+            // endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
+            getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
     }
 
     private void removeInputConfirmationScreen(){
@@ -935,17 +992,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void switchToHowToPlayScreen(View view) {
-        if (inFocus) {
-            inFocus = false;
-            LayoutInflater inflater = getLayoutInflater();
-            howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
-            getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT));
+        if (mapInFocus) {
+            mapInFocus = false;
+            if(!howToPlayScreen.hasFocus()) {
+                // LayoutInflater inflater = getLayoutInflater();
+                // howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
+                getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT));
+            }
         }
     }
 
     public void removeHowToPlayScreen(View view){
-        inFocus = true;
+        mapInFocus = true;
         ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
 
@@ -954,22 +1013,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void switchToLoginScreen(View view) {
-        if (inFocus) {
+        if (mapInFocus) {
             addLoginScreen();
         }
     }
 
-    private void removeLoginScreen(){
-        inFocus = true;
+    private void removeLoginScreen() {
+        mapInFocus = true;
         ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
     }
 
-    private void addLoginScreen(){
-        inFocus = false;
-        LayoutInflater inflater = getLayoutInflater();
-        loginScreen = inflater.inflate(R.layout.login, null);
-        getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
+    private void addLoginScreen() {
+        mapInFocus = false;
+        if(!loginScreen.hasFocus()) {
+            getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+        }
     }
 
     /////////////////////////////////////////////////
@@ -982,14 +1041,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onResume() {
-//        inFocus = true;
+        appInFocus = true;
         super.onResume();
         mapView.onResume();
     }
 
     @Override
     public void onPause() {
-//        inFocus = false;
+        appInFocus = false;
         super.onPause();
         mapView.onPause();
     }
