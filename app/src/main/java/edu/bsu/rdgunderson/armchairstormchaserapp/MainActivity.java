@@ -935,12 +935,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         // fill playerslist with saved profiles from file
                         for(int i = 0; i < profiles.length; i++) {
                             String[] values = profiles[i].split(",");
-                            ArrayList<String> playerProfile = new ArrayList<String>();
-                            for(int k = 0; k < values.length; k++) {
-                                playerProfile.add(values[k]);
+                            // if values isn't an empty string
+                            if (values.length > 1) {
+                                ArrayList<String> playerProfile = new ArrayList<String>();
+                                for (int k = 0; k < values.length; k++) {
+                                    playerProfile.add(values[k]);
+                                }
+                                Log.d("PROFILES", profiles[i]);
+                                playersList.add(playerProfile);
                             }
-                            Log.d("PROFILES", profiles[i]);
-                            playersList.add(playerProfile);
                         }
                         boolean foundPlayerProfile = false;
                         // check player list for current username
