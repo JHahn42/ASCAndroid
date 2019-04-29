@@ -662,6 +662,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     removeLoginScreen();
                     if(showBeginOfDay) {
                         switchToEndOfDayScreen();
+                        //Set Screen to Say Beginning of Day
+                        setBeginOfDayText();
                         setEndOfDayScreenButtons(true);
                         setScoreOnEndOfDayScreen(dailyScore, totalScore);
                         dailyScore = 0;
@@ -700,6 +702,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
+                    //Set Text to End Of Day
+                    setEndOfDayText();
                     //Set Buttons Disabled
                     setEndOfDayScreenButtons(false);
                     //Set values for end of day screen
@@ -748,6 +752,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         findViewById(R.id.beginNewDay_NewStart_button).setEnabled(toggle);
     }
 
+    private void setBeginOfDayText() {
+        //Get End Of Day Label from UI
+        TextView endOfDayLabel = findViewById(R.id.endofDay_textView);
+        //Set text to Beginning of Day
+        endOfDayLabel.setText("Beginning of Day");
+    }
+
+    private void setEndOfDayText() {
+        //Get End Of Day Label from UI
+        TextView endOfDayLabel = findViewById(R.id.endofDay_textView);
+        //Set text to Beginning of Day
+        endOfDayLabel.setText("End of Day");
+    }
+
     public void beginNewDayNewStart(View view) {
         //Set to selecting starting location
 //        isSelectingStartingLocation = true;
@@ -773,6 +791,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.emit("startLocationSelect", currentLongitude, currentLatitude, scoreMultiplier);
 //        if (endOfDayScreen.hasFocus()) {
         ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        //Add Starting Location to where they are
+        placeStartingLocationMarker();
         mapInFocus = true;
 //        }
     }
@@ -860,6 +880,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Login
 
     public void login(View view) {
+        //Disable Login Button
+        toggleLoginButton(true);
         //Get the textView for username from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         //If input is not null
@@ -1022,10 +1044,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     indexOfPlayer = playersList.indexOf(newPlayer);
                 }
             }
-
             socket.emit("login", currentUsername, currentKey, dailyScore, totalScore, scoreMultiplier);
         }
 
+    }
+
+    private void toggleLoginButton(Boolean enableDisable) {
+        int toggleButton;
+        //Get login button from UI
+        Button login = findViewById(R.id.login_button);
+        if (enableDisable) {
+            //If the player is logging in set button Invisible
+            toggleButton = View.INVISIBLE;
+        } else {
+            //If the player has logged out set button visible
+            toggleButton = View.VISIBLE;
+        }
+        login.setVisibility(toggleButton);
     }
 
     public void toggleHideUserNameInput(Boolean toggle){
@@ -1069,6 +1104,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             socket.emit("logoff");
             saveUserProfiles();
             switchToLoginScreen(view);
+            toggleLoginButton(false);
             //Remove everything from style
             removeNonWeatherFromStyle();
             //Reset Selection (Basically entire app selection booleans)
@@ -1123,7 +1159,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public void stopTravelButtonYes(View view){
-        //If the player selects yes on the input confirmation screen emit sopt travel
+        //If the player selects yes on the input confirmation screen emit stop travel
         socket.emit("stopTravel");
         //Remove current route from screen
         removeRoute();
@@ -1177,9 +1213,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
 
-    public void switchToMainScreen(View view) {
-        removeLoginScreen();
-    }
+//    public void switchToMainScreen(View view) {
+//        removeLoginScreen();
+//    }
 
     public void switchToLoginScreen(View view) {
         if (mapInFocus) {
