@@ -112,6 +112,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean isSelectingStartingLocation = true;
     private boolean showBeginOfDay = false;
 
+    private boolean loginHasFocus = false;
+    private boolean endOfDayHasFocus = false;
+
     private String currentUsername;
     private String currentKey;
     private int indexOfPlayer;
@@ -696,9 +699,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 public void run() {
                     //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
-                    if (loginScreen.hasFocus()) {
-//                        removeLoginScreen();
+                    if (loginHasFocus) {
                         toggleHideUserNameInput(false);
+                        removeLoginScreen();
                     }
                     //Switch view to end of day screen
                     switchToEndOfDayScreen();
@@ -774,12 +777,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         isSelectingStartingLocation = true;
         scoreMultiplier = 1;
         //Remove end of day screen if the beginning of day has begun
-//        if (endOfDayScreen.hasFocus()) {
-        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        removeEndOfDayScreen();
         //Change text to Say choose new starting location
         changeStartingLocationTextBack();
         mapInFocus = true;
-//        }
     }
 
     public void beginNewDaySameStart(View view) {
@@ -789,12 +790,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         scoreMultiplier = 1.2;
         changeStartingLocationText();
         socket.emit("startLocationSelect", currentLongitude, currentLatitude, scoreMultiplier);
-//        if (endOfDayScreen.hasFocus()) {
-        ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
+        removeEndOfDayScreen();
         //Add Starting Location to where they are
         placeStartingLocationMarker();
         mapInFocus = true;
-//        }
     }
 
     /////////////////////////////////////////////////
@@ -885,7 +884,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Get the textView for username from UI
         TextView usernameTextBox = findViewById(R.id.userName_text_input);
         //If input is not null
-        if (usernameTextBox.getText() != null && loginScreen.hasFocus()) {
+        if (usernameTextBox.getText() != null && loginHasFocus) {
             // get username and strip out unwanted special characters
             currentUsername = usernameTextBox.getText().toString().replaceAll("[^a-zA-Z0-9\\s_-]", "");
             Log.d("LOGIN", currentUsername);
@@ -1100,9 +1099,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Logout
 
     public void logout(View view) {
+        saveUserProfiles();
         if (mapInFocus) {
             socket.emit("logoff");
-            saveUserProfiles();
             switchToLoginScreen(view);
             toggleLoginButton(false);
             //Remove everything from style
@@ -1177,14 +1176,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Screen Methods
 
     private void removeEndOfDayScreen() {
-        if (!endOfDayScreen.hasFocus()) {
+        if (endOfDayHasFocus) {
+            endOfDayHasFocus = false;
             ((ViewGroup) endOfDayScreen.getParent()).removeView(endOfDayScreen);
         }
     }
 
     public void switchToEndOfDayScreen() {
         mapInFocus = false;
-        if(!endOfDayScreen.hasFocus()) {
+        if(!endOfDayHasFocus) {
+            endOfDayHasFocus = true;
             // LayoutInflater inflater = getLayoutInflater();
             // endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
             getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1225,14 +1226,19 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void removeLoginScreen() {
         mapInFocus = true;
-        ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
+        if(loginHasFocus) {
+            loginHasFocus = false;
+            ((ViewGroup) loginScreen.getParent()).removeView(loginScreen);
+        }
     }
 
     private void addLoginScreen() {
         mapInFocus = false;
-        if(!loginScreen.hasFocus()) {
+        if(!loginHasFocus) {
+            loginHasFocus = true;
             getWindow().addContentView(loginScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
+            toggleLoginButton(false);
         }
     }
 
