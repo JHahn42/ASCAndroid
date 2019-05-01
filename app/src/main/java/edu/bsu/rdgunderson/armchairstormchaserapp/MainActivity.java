@@ -822,12 +822,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         int hours = timesec / 3600;
         int minutes = (timesec % 3600) / 60;
         int seconds = (timesec % 3600) % 60;
+        //Background Color
+        int bGColor = 0xffffffff;
         if (timeIsNegative(seconds)) {
             seconds = 0;
+            bGColor = 0xffff0000;
+        }
+        if (timeIsNegative(minutes)) {
+            minutes = 0;
+        }
+        if (timeIsNegative(hours)) {
+            hours = 0;
         }
         String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
         timeText.setText(countDown);
-        timeText.setBackgroundColor(0xffffffff);
+        timeText.setBackgroundColor(bGColor);
     }
 
     private boolean timeIsNegative(int seconds) {
