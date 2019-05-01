@@ -12,3 +12,10 @@ The assets used for the game are located in the res/drawable folder, and if need
 The string values for the UI are in the res/values folder and are applied to the UI.
 
 This Armchair Stormchasers app was created by the Development Team, Robert Gunderson, Jacob Hahn, William Moore and Ian Pemberton
+
+## Known Issues
+* Player info is currently stored app side, meaning to ensure a user has the most up to date info and does not lose progress, they need to log into the server at end of day, or at least after they've exited their last storm polygon for the day, and have the info saved locally.
+* Overlapping weather polygons inside of the same layer do not draw in the overlapped portion, but players will still gain points in these areas
+* If a player logs in for the first time, but does not choose a starting location and then logs out, when they log in the next time they get the Beginning of Day Screen and can choose the continue option to get the score multiplyer, but they will start out at the default location of BSU's Frog Baby.
+* There is currently nothing preventing players from traveling outside of the US, other than a lack of storm data.
+* On the login screen the logout button is still pressable while invisible, causing the server to send an error message that the user must log in to log out when pressed.
