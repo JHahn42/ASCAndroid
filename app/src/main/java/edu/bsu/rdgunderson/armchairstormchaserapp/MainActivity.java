@@ -720,7 +720,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     showBeginOfDay = true;
-                    switchToEndOfDayScreen();
                     //Set Screen to Say Beginning of Day
                     setBeginOfDayText();
                     setEndOfDayScreenButtons(true);
