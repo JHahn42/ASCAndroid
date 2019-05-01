@@ -660,7 +660,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 @Override
                 public void run() {
                     serverConnection = true;
-                    Toast.makeText(getApplicationContext(),"Connected to server.",Toast.LENGTH_SHORT).show();
+                    if (appInFocus) {
+                        Toast.makeText(getApplicationContext(), "Connected to server.", Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -674,7 +676,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 public void run() {
                     serverConnection = false;
                     logout(loginScreen);
-                    Toast.makeText(getApplicationContext(),"Connection with server lost.",Toast.LENGTH_LONG).show();
+                    if (appInFocus) {
+                        Toast.makeText(getApplicationContext(), "Connection with server lost.", Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         }
