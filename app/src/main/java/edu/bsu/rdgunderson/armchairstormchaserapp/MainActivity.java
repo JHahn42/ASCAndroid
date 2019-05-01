@@ -790,7 +790,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Remove end of day screen if the beginning of day has begun
         //Change Score Multiplier;
         isSelectingStartingLocation = false;
-        scoreMultiplier = 1.2;
+        scoreMultiplier = Constants.CONTINUE_SCORE_MULTIPLIER;
         changeStartingLocationText();
         socket.emit("startLocationSelect", currentLongitude, currentLatitude, scoreMultiplier);
         removeEndOfDayScreen();

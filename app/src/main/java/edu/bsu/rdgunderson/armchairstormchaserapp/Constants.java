@@ -6,4 +6,5 @@ public class Constants {
     public static final String MAPBOX_STYLE_URL = "mapbox://styles/stripedwristbands/cjuonea47c1dh1flpaocgkpqn";
     public static final int REFRESH_RATE_IN_SECONDS = 1;
     public static final String ROUTE_LINE_COLOR = "#6699ff";
+    public static final double CONTINUE_SCORE_MULTIPLIER = 1.25;
 }
