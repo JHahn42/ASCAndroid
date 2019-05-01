@@ -227,7 +227,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         destination = Point.fromLngLat(destinationLongitude, destinationLatitude);
                         //Find route and mark it on map
                         getRoute(origin, destination);
-//                        setDestinationMarker(destinationLongitude, destinationLatitude);
                         updateMarkerPosition();
                         toggleStopTravelButton(true);
                     } else {
@@ -235,7 +234,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         currentLatitude = point.getLatitude();
                         currentLongitude = point.getLongitude();
                         currentLocation = Point.fromLngLat(currentLongitude, currentLatitude);
-                        //Place marker where current lcoation is selected
+                        //Place marker where current location is selected
                         placeStartingLocationMarker();
                         //Change instruction text to reflect change
                         changeStartingLocationText();
@@ -251,28 +250,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     //Marker Methods
-
-    /*private void setDestinationMarker(double destinationLongitude, double destinationLatitude) {
-        Style style = map.getStyle();
-        if (destinationMarkerSymbolLayer != null) {
-            removeDestinationMarker();
-        }
-        style.addImage("destination-marker-icon-id",
-                BitmapFactory.decodeResource(
-                        MainActivity.this.getResources(), R.drawable.asc_destination_marker));
-        GeoJsonSource destinationMarkerGeoJsonSource = new GeoJsonSource("destination-source-id", Feature.fromGeometry(
-                Point.fromLngLat(destinationLongitude, destinationLatitude)));
-        style.addSource(destinationMarkerGeoJsonSource);
-
-        destinationMarkerSymbolLayer = new SymbolLayer("destinationMarker-layer-id", "destination-source-id");
-        destinationMarkerSymbolLayer.withProperties(
-                PropertyFactory.iconImage("destination-marker-icon-id")
-        );
-        style.addLayer(destinationMarkerSymbolLayer.withProperties(
-                iconAllowOverlap(false),
-                iconIgnorePlacement(true)
-        ));
-    }*/
 
     private void placeStartingLocationMarker() {
         Style style = map.getStyle();
@@ -694,7 +671,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //socket.emit("getPlayerUpdate");
                     isEndOfDay = true;
                     if (loginHasFocus) {
                         toggleHideUserNameInput(false);
@@ -785,10 +761,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void beginNewDayNewStart(View view) {
         //Set to selecting starting location
-//        isSelectingStartingLocation = true;
-        //Remove Marker from Screen
-        //Reset Score Multiplier;
         isSelectingStartingLocation = true;
+        //Reset Score Multiplier
         scoreMultiplier = 1;
         //Remove end of day screen if the beginning of day has begun
         removeEndOfDayScreen();
@@ -1139,8 +1113,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //If in focus (No Other screens on top)
         if (mapInFocus) {
             //When the stop travel button ic clicked, display in put confirmation screen
-            // LayoutInflater inflater = getLayoutInflater();
-           // inputConfirmationScreen = inflater.inflate(R.layout.input_confirmation, null);
             getWindow().addContentView(inputConfirmationScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
         }
@@ -1201,8 +1173,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapInFocus = false;
         if(!endOfDayHasFocus) {
             endOfDayHasFocus = true;
-            // LayoutInflater inflater = getLayoutInflater();
-            // endOfDayScreen = inflater.inflate(R.layout.end_of_day_screen, null);
             getWindow().addContentView(endOfDayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT));
         }
@@ -1216,8 +1186,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mapInFocus) {
             mapInFocus = false;
             if(!howToPlayScreen.hasFocus()) {
-                // LayoutInflater inflater = getLayoutInflater();
-                // howToPlayScreen = inflater.inflate(R.layout.how_to_play, null);
                 getWindow().addContentView(howToPlayScreen, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT));
             }
@@ -1228,10 +1196,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mapInFocus = true;
         ((ViewGroup) howToPlayScreen.getParent()).removeView(howToPlayScreen);
     }
-
-//    public void switchToMainScreen(View view) {
-//        removeLoginScreen();
-//    }
 
     public void switchToLoginScreen(View view) {
         if (mapInFocus) {
