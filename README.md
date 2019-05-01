@@ -19,3 +19,4 @@ This Armchair Stormchasers app was created by the Development Team, Robert Gunde
 * If a player logs in for the first time, but does not choose a starting location and then logs out, when they log in the next time they get the Beginning of Day Screen and can choose the continue option to get the score multiplyer, but they will start out at the default location of BSU's Frog Baby.
 * There is currently nothing preventing players from traveling outside of the US, other than a lack of storm data.
 * On the login screen the logout button is still pressable while invisible, causing the server to send an error message that the user must log in to log out when pressed.
+* Going from End of Day to Beginning of Day while logged into the server acts a bit wonky, as it has been largely untested, so it may be best to exit and restart the app when starting on a new day.
