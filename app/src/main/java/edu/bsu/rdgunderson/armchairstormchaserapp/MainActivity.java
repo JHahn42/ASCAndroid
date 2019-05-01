@@ -1100,6 +1100,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     public void logout(View view) {
         saveUserProfiles();
+        showBeginOfDay = false;
         if (mapInFocus) {
             socket.emit("logoff");
             switchToLoginScreen(view);
