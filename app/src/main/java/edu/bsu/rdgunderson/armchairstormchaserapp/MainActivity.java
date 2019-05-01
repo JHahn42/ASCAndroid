@@ -162,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         socket.on("updatePlayer", onUpdatePlayer);
         socket.on("destinationReached", destinationReached);
         socket.on("endOfDay", endOfDay);
+        socket.on("beginOfDay", beginOfDay);
         socket.on("weatherUpdate", weatherUpdate);
         socket.on("loginFromPrevious", loginFromPrevious);
         socket.on("loginSuccess", loginSuccess);
@@ -200,8 +201,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 if (mapInFocus && appInFocus && !isEndOfDay && !isSelectingStartingLocation) {
                                     socket.emit("getPlayerUpdate");
                                 }
-                                //Enable or Disable End of Day buttons based on Time
-                                //toggleEndOfDayButtons();
                                 //If the player has a set route toggle buttons and labels accordingly
                                 toggleStopTravelButton(isTraveling);
                             }
@@ -644,7 +643,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }
                         isSelectingStartingLocation = false;
                         changeStartingLocationText();
-//                        setDestinationMarker();
                         removeLoginScreen();
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -661,7 +659,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-
                     removeLoginScreen();
                     if(showBeginOfDay) {
                         switchToEndOfDayScreen();
@@ -711,6 +708,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     setEndOfDayScreenButtons(false);
                     //Set values for end of day screen
                     setScoreOnEndOfDayScreen(dailyScore, totalScore);
+                }
+            });
+        }
+    };
+
+    private Emitter.Listener beginOfDay = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showBeginOfDay = true;
+                    switchToEndOfDayScreen();
+                    //Set Screen to Say Beginning of Day
+                    setBeginOfDayText();
+                    setEndOfDayScreenButtons(true);
+                    setScoreOnEndOfDayScreen(dailyScore, totalScore);
+                    dailyScore = 0;
                 }
             });
         }
