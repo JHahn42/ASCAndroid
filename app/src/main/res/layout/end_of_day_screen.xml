@@ -37,7 +37,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="97dp"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             tools:layout_editor_absoluteX="16dp"
             tools:layout_editor_absoluteY="541dp">
@@ -53,7 +53,7 @@
 
             <TextView
                 android:id="@+id/dailyScore_textView"
-                android:layout_width="284dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/dailyScore"
@@ -65,7 +65,7 @@
 
         <LinearLayout
             android:layout_width="385dp"
-            android:layout_height="63dp"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             tools:layout_editor_absoluteX="8dp"
             tools:layout_editor_absoluteY="636dp">
@@ -81,7 +81,7 @@
 
             <TextView
                 android:id="@+id/totalScore_textView"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/totalScore"
