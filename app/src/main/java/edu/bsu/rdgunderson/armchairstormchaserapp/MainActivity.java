@@ -804,20 +804,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Get time left textView from Ui
         TextView timeText = findViewById(R.id.textView_Time);
         //Set text from time left to time left updated from server
-        int timesec = (int)Math.round(timeLeft);
-        int hours = timesec / 3600;
-        int minutes = (timesec % 3600) / 60;
-        int seconds = (timesec % 3600) % 60;
-        if (timeIsNegative(seconds)) {
-            seconds = 0;
+        int bgColor = 0xffffffff;
+        int timeInSec = (int)Math.round(timeLeft);
+        int hours = timeInSec / 3600;
+        int minutes = (timeInSec % 3600) / 60;
+        int seconds = (timeInSec % 3600) % 60;
+        if (timeInSec < 0) {
+            bgColor = 0xffff0000;
         }
         String countDown = String.format("%2d:%02d:%02d", hours, minutes, seconds);
         timeText.setText(countDown);
-        timeText.setBackgroundColor(0xffffffff);
-    }
-
-    private boolean timeIsNegative(int seconds) {
-        return seconds < 0;
+        timeText.setBackgroundColor(bgColor);
     }
 
     private void updateScore(int score) {
