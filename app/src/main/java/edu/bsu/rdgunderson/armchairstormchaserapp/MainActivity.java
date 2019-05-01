@@ -36,12 +36,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mapbox.api.directions.v5.DirectionsCriteria;
 import com.mapbox.api.directions.v5.MapboxDirections;
@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean isEndOfDay = false;
     public boolean isSelectingStartingLocation = true;
     private boolean showBeginOfDay = false;
-
+    private boolean serverConnection = false;
     private boolean loginHasFocus = false;
     private boolean endOfDayHasFocus = false;
 
@@ -154,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
         socket = app.getSocket();
-        // socket.on(Socket.EVENT_CONNECT, onConnect);
+        socket.on(Socket.EVENT_CONNECT, onConnect);
         socket.on(Socket.EVENT_DISCONNECT, onDisconnect);
         // socket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         // socket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
@@ -653,13 +653,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };
 
+    private Emitter.Listener onConnect = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            MainActivity.this.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    serverConnection = true;
+                    Toast.makeText(getApplicationContext(),"Connected to server.",Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    };
+
     private Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             MainActivity.this.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    serverConnection = false;
                     logout(loginScreen);
+                    Toast.makeText(getApplicationContext(),"Connection with server lost.",Toast.LENGTH_LONG).show();
                 }
             });
         }
@@ -868,97 +883,132 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     //Login
 
     public void login(View view) {
-        //Disable Login Button
-        toggleLoginButton(true);
+        if (loginHasFocus) {
         //Get the textView for username from UI
-        TextView usernameTextBox = findViewById(R.id.userName_text_input);
-        //If input is not null
-        if (usernameTextBox.getText() != null && loginHasFocus) {
-            // get username and strip out unwanted special characters
-            currentUsername = usernameTextBox.getText().toString().replaceAll("[^a-zA-Z0-9\\s_-]", "");
-            Log.d("LOGIN", currentUsername);
-            // check if player file has not already been read
-            if (playersList.isEmpty()) {
+            TextView usernameTextBox = findViewById(R.id.userName_text_input);
+            //If app is connected to server
+            if (serverConnection) {
+                //If input is not null
+                if (!usernameTextBox.getText().toString().equals("")) {
+                    //Disable Login Button
+                    toggleLoginButton(true);
+                    // get username and strip out unwanted special characters
+                    currentUsername = usernameTextBox.getText().toString().replaceAll("[^a-zA-Z0-9\\s_-]", "");
+                    // check if player file has not already been read
+                    if (playersList.isEmpty()) {
+                        File playerFile = new File(getApplicationContext().getFilesDir(), "player_profiles");
+                        // check if file exists. If not, create player and fill with default info
+                        if (!playerFile.exists()) {
+                            try {
+                                ArrayList<String> playerInfo = new ArrayList<String>();
+                                playerInfo.add(currentUsername);
+                                // a unique key
+                                currentKey = UUID.randomUUID().toString();
+                                playerInfo.add(currentKey);
+                                playerInfo.add("-85.407286"); // current longitude
+                                playerInfo.add("40.203264"); // current latitude
+                                playerInfo.add("0"); // daily score value
+                                playerInfo.add("0"); // total score
 
-                File playerFile = new File(getApplicationContext().getFilesDir(), "player_profiles");
-                Log.d("FILELOC", playerFile.toString());
-                // check if file exists. If not, create player and fill with default info
-                if (!playerFile.exists()) {
-                    try {
-                        Log.d("FILELOC", "Don't exist");
-                        ArrayList<String> playerInfo = new ArrayList<String>();
-                        playerInfo.add(currentUsername);
-                        // a unique key
-                        currentKey = UUID.randomUUID().toString();
-                        playerInfo.add(currentKey);
-                        playerInfo.add("-85.407286"); // current longitude
-                        playerInfo.add("40.203264"); // current latitude
-                        playerInfo.add("0"); // daily score value
-                        playerInfo.add("0"); // total score
+                                currentLongitude = -85.407286;
+                                currentLatitude = 40.203264;
+                                dailyScore = 0;
+                                totalScore = 0;
 
-                        currentLongitude = -85.407286;
-                        currentLatitude = 40.203264;
-                        dailyScore = 0;
-                        totalScore = 0;
+                                String playerOutput = "";
 
-                        String playerOutput = "";
-
-                        for(int i = 0; i < playerInfo.size(); i++){
-                            playerOutput += playerInfo.get(i) + ",";
-                        }
-                        playerOutput = playerOutput.substring(0, playerOutput.length() - 1);
-                        playerOutput += ";";
-                        Log.d("FILELOC", playerOutput);
-                        FileOutputStream fos = openFileOutput("player_profiles", Context.MODE_PRIVATE);
-                        fos.write(playerOutput.getBytes());
-                        fos.close();
-                        playersList.add(playerInfo);
-                        indexOfPlayer = 0;
-                    } catch(IOException e){
-                        e.printStackTrace();
-                    }
-
-                } // file does exist
-                else {
-                    Log.d("FILELOC", "FILELOC DO EXIST");
-                    String line = null;
-                    try {
-                        FileInputStream fileInputStream = new FileInputStream(playerFile);
-                        InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-                        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-                        StringBuilder stringBuilder = new StringBuilder();
-
-                        while ( (line = bufferedReader.readLine()) != null )
-                        {
-                            stringBuilder.append(line);
-                        }
-                        fileInputStream.close();
-                        line = stringBuilder.toString();
-
-                        bufferedReader.close();
-
-                        Log.d("FILELOC", line);
-
-                        String[] profiles = line.split(";");
-
-
-                        // fill playerslist with saved profiles from file
-                        for(int i = 0; i < profiles.length; i++) {
-                            String[] values = profiles[i].split(",");
-                            // if values isn't an empty string
-                            if (values.length > 1) {
-                                ArrayList<String> playerProfile = new ArrayList<String>();
-                                for (int k = 0; k < values.length; k++) {
-                                    playerProfile.add(values[k]);
+                                for (int i = 0; i < playerInfo.size(); i++) {
+                                    playerOutput += playerInfo.get(i) + ",";
                                 }
-                                Log.d("PROFILES", profiles[i]);
-                                playersList.add(playerProfile);
+                                playerOutput = playerOutput.substring(0, playerOutput.length() - 1);
+                                playerOutput += ";";
+                                FileOutputStream fos = openFileOutput("player_profiles", Context.MODE_PRIVATE);
+                                fos.write(playerOutput.getBytes());
+                                fos.close();
+                                playersList.add(playerInfo);
+                                indexOfPlayer = 0;
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        } // file does exist
+                        else {
+                            String line = null;
+                            try {
+                                FileInputStream fileInputStream = new FileInputStream(playerFile);
+                                InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
+                                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                                StringBuilder stringBuilder = new StringBuilder();
+
+                                while ((line = bufferedReader.readLine()) != null) {
+                                    stringBuilder.append(line);
+                                }
+                                fileInputStream.close();
+                                line = stringBuilder.toString();
+
+                                bufferedReader.close();
+
+                                String[] profiles = line.split(";");
+
+
+                                // fill playerslist with saved profiles from file
+                                for (int i = 0; i < profiles.length; i++) {
+                                    String[] values = profiles[i].split(",");
+                                    // if values isn't an empty string
+                                    if (values.length > 1) {
+                                        ArrayList<String> playerProfile = new ArrayList<String>();
+                                        for (int k = 0; k < values.length; k++) {
+                                            playerProfile.add(values[k]);
+                                        }
+                                        playersList.add(playerProfile);
+                                    }
+                                }
+                                boolean foundPlayerProfile = false;
+                                // check player list for current username
+                                for (int i = 0; i < playersList.size(); i++) {
+                                    if (currentUsername.equals(playersList.get(i).get(0))) {
+                                        currentKey = playersList.get(i).get(1);
+                                        currentLongitude = Double.parseDouble(playersList.get(i).get(2));
+                                        currentLatitude = Double.parseDouble(playersList.get(i).get(3));
+                                        dailyScore = Integer.parseInt(playersList.get(i).get(4));
+                                        totalScore = Integer.parseInt(playersList.get(i).get(5));
+                                        indexOfPlayer = i;
+                                        foundPlayerProfile = true;
+                                        showBeginOfDay = true;
+                                        break;
+                                    }
+                                } // if not found create new user profile
+                                if (!foundPlayerProfile) {
+                                    ArrayList<String> newPlayer = new ArrayList<String>();
+                                    newPlayer.add(currentUsername);
+                                    currentKey = UUID.randomUUID().toString();
+                                    newPlayer.add(currentKey);
+                                    newPlayer.add("-85.407286");
+                                    newPlayer.add("40.203264");
+                                    newPlayer.add("0");
+                                    newPlayer.add("0");
+                                    currentLongitude = -85.407286;
+                                    currentLatitude = 40.203264;
+                                    dailyScore = 0;
+                                    totalScore = 0;
+
+                                    playersList.add(newPlayer);
+                                    indexOfPlayer = playersList.indexOf(newPlayer);
+                                }
+
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
                         }
+
+                    } // players list is not empty, so check it
+                    else {
                         boolean foundPlayerProfile = false;
                         // check player list for current username
-                        for(int i = 0; i < playersList.size(); i++)  {
-                            if(currentUsername.equals(playersList.get(i).get(0))) {
+                        for (int i = 0; i < playersList.size(); i++) {
+                            if (currentUsername.equals(playersList.get(i).get(0))) {
                                 currentKey = playersList.get(i).get(1);
                                 currentLongitude = Double.parseDouble(playersList.get(i).get(2));
                                 currentLatitude = Double.parseDouble(playersList.get(i).get(3));
@@ -970,7 +1020,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 break;
                             }
                         } // if not found create new user profile
-                        if(!foundPlayerProfile) {
+                        if (!foundPlayerProfile) {
                             ArrayList<String> newPlayer = new ArrayList<String>();
                             newPlayer.add(currentUsername);
                             currentKey = UUID.randomUUID().toString();
@@ -987,54 +1037,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             playersList.add(newPlayer);
                             indexOfPlayer = playersList.indexOf(newPlayer);
                         }
-
                     }
-                    catch(FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-                    catch(IOException e) {
-                        e.printStackTrace();
-                    }
+                    socket.emit("login", currentUsername, currentKey, dailyScore, totalScore, scoreMultiplier);
                 }
-
-            } // players list is not empty, so check it
-            else {
-                boolean foundPlayerProfile = false;
-                // check player list for current username
-                for(int i = 0; i < playersList.size(); i++)  {
-                    if(currentUsername.equals(playersList.get(i).get(0))) {
-                        currentKey = playersList.get(i).get(1);
-                        currentLongitude = Double.parseDouble(playersList.get(i).get(2));
-                        currentLatitude = Double.parseDouble(playersList.get(i).get(3));
-                        dailyScore = Integer.parseInt(playersList.get(i).get(4));
-                        totalScore = Integer.parseInt(playersList.get(i).get(5));
-                        indexOfPlayer = i;
-                        foundPlayerProfile = true;
-                        showBeginOfDay = true;
-                        break;
-                    }
-                } // if not found create new user profile
-                if(!foundPlayerProfile) {
-                    ArrayList<String> newPlayer = new ArrayList<String>();
-                    newPlayer.add(currentUsername);
-                    currentKey = UUID.randomUUID().toString();
-                    newPlayer.add(currentKey);
-                    newPlayer.add("-85.407286");
-                    newPlayer.add("40.203264");
-                    newPlayer.add("0");
-                    newPlayer.add("0");
-                    currentLongitude = -85.407286;
-                    currentLatitude = 40.203264;
-                    dailyScore = 0;
-                    totalScore = 0;
-
-                    playersList.add(newPlayer);
-                    indexOfPlayer = playersList.indexOf(newPlayer);
+                else {
+                    Toast.makeText(getApplicationContext(),"Username needed. Special characters other than hyphen, underscore, or space are not allowed.",Toast.LENGTH_LONG).show();
                 }
             }
-            socket.emit("login", currentUsername, currentKey, dailyScore, totalScore, scoreMultiplier);
+            else {
+                Toast.makeText(getApplicationContext(),"No server connection.",Toast.LENGTH_LONG).show();
+            }
         }
-
     }
 
     private void toggleLoginButton(Boolean enableDisable) {
@@ -1057,7 +1070,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void saveUserProfiles() {
-        Log.d("PLISTSAVE", "save profiles called.");
         File file = new File(getApplicationContext().getFilesDir(), "player_profiles");
 
         if(file.exists()) {
@@ -1073,7 +1085,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     output = output.substring(0, output.length() - 1);
                     output += ";";
                 }
-                Log.d("PLISTSAVE", output);
                 outputStream.write(output.getBytes());
                 outputStream.close();
 
